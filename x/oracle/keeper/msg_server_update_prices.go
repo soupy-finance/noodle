@@ -14,9 +14,9 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Verify caller is a validator
-	val := k.stakingKeeper.Validator(ctx, sdk.ValAddress(msg.Creator))
+	val, found := k.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Creator))
 
-	if val == nil {
+	if !found || !val.IsBonded() {
 		return nil, types.NotValidator
 	}
 
