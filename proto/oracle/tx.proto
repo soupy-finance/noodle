@@ -1,0 +1,22 @@
+syntax = "proto3";
+package soupyfinance.noodle.oracle;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/soupy-finance/noodle/x/oracle/types";
+
+// Msg defines the Msg service.
+service Msg {
+      rpc UpdatePrices(MsgUpdatePrices) returns (MsgUpdatePricesResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgUpdatePrices {
+  string creator = 1;
+  string data = 2;
+}
+
+message MsgUpdatePricesResponse {
+}
+
+// this line is used by starport scaffolding # proto/tx/message

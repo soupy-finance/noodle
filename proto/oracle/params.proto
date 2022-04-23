@@ -1,0 +1,13 @@
+syntax = "proto3";
+package soupyfinance.noodle.oracle;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/soupy-finance/noodle/x/oracle/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+  repeated string assets = 1 [(gogoproto.moretags) = "yaml:\"assets\""];
+}

@@ -1,0 +1,43 @@
+syntax = "proto3";
+package soupyfinance.noodle.oracle;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "oracle/params.proto";
+// this line is used by starport scaffolding # 1
+
+option go_package = "github.com/soupy-finance/noodle/x/oracle/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/soupyfinance/noodle/oracle/params";
+  }
+  // Queries a list of Prices items.
+	rpc Prices(QueryPricesRequest) returns (QueryPricesResponse) {
+		option (google.api.http).get = "/soupy-finance/noodle/oracle/prices/{assets}";
+	}
+
+// this line is used by starport scaffolding # 2
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryPricesRequest {
+  string assets = 1;
+}
+
+message QueryPricesResponse {
+  string data = 1;
+}
+
+// this line is used by starport scaffolding # 3
