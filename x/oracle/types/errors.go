@@ -10,4 +10,6 @@ import (
 var (
 	InvalidPriceData = sdkerrors.Register(ModuleName, 1100, "invalid price data")
 	NotValidator     = sdkerrors.Register(ModuleName, 1101, "not a validator")
+	InvalidAssetList = sdkerrors.Register(ModuleName, 1102, "invalid asset list")
+	PriceAggError    = sdkerrors.Register(ModuleName, 1102, "price aggregation error")
 )

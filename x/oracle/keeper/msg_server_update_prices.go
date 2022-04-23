@@ -36,10 +36,10 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 		price, set := data[asset]
 
 		if set {
-			valAsetKeyBytes := []byte(msg.Creator + ":" + asset)
+			valAssetKeyBytes := []byte(msg.Creator + ":" + asset)
 			priceBytes := make([]byte, 8)
 			binary.BigEndian.PutUint64(priceBytes, price)
-			store.Set(valAsetKeyBytes, priceBytes)
+			store.Set(valAssetKeyBytes, priceBytes)
 		}
 	}
 

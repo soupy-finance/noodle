@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/soupy-finance/noodle/x/oracle/types"
@@ -16,8 +17,24 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: Process the query
-	_ = ctx
+	var assets []string
+	err := json.Unmarshal([]byte(req.Assets), &assets)
 
-	return &types.QueryPricesResponse{}, nil
+	if err != nil {
+		return nil, types.InvalidAssetList
+	}
+
+	prices := make([]uint64, len(assets))
+
+	for i, asset := range assets {
+		prices[i] = k.AggAssetPrice(ctx, asset)
+	}
+
+	pricesBytes, err := json.Marshal(prices)
+
+	if err != nil {
+		return nil, types.PriceAggError
+	}
+
+	return &types.QueryPricesResponse{Data: string(pricesBytes)}, nil
 }
