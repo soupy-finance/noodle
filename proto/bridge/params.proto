@@ -1,0 +1,13 @@
+syntax = "proto3";
+package soupyfinance.noodle.bridge;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/soupy-finance/noodle/x/bridge/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+  map<string, string> chainContracts = 1 [(gogoproto.moretags) = "yaml:\"chain_contracts\""];
+}

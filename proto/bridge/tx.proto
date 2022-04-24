@@ -1,0 +1,25 @@
+syntax = "proto3";
+package soupyfinance.noodle.bridge;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/soupy-finance/noodle/x/bridge/types";
+
+// Msg defines the Msg service.
+service Msg {
+      rpc ObserveDeposit(MsgObserveDeposit) returns (MsgObserveDepositResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgObserveDeposit {
+  string creator = 1;
+  string chainId = 2;
+  string depositor = 3;
+  string depositId = 4;
+  string quantity = 5;
+}
+
+message MsgObserveDepositResponse {
+}
+
+// this line is used by starport scaffolding # proto/tx/message

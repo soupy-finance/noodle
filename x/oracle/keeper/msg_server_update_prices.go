@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -21,7 +20,7 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 	}
 
 	// Unmarshal JSON
-	var data map[string]uint64
+	var data map[string]string
 	err := json.Unmarshal([]byte(msg.Data), &data)
 
 	if err != nil {
@@ -37,9 +36,7 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 
 		if set {
 			valAssetKeyBytes := []byte(msg.Creator + ":" + asset)
-			priceBytes := make([]byte, 8)
-			binary.BigEndian.PutUint64(priceBytes, price)
-			store.Set(valAssetKeyBytes, priceBytes)
+			store.Set(valAssetKeyBytes, []byte(price))
 		}
 	}
 

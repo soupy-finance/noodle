@@ -24,7 +24,7 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 		return nil, types.InvalidAssetList
 	}
 
-	prices := make([]uint64, len(assets))
+	prices := make([]string, len(assets))
 
 	for i, asset := range assets {
 		prices[i] = k.AggAssetPrice(ctx, asset)
@@ -33,7 +33,7 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 	pricesBytes, err := json.Marshal(prices)
 
 	if err != nil {
-		return nil, types.PriceAggError
+		panic(err)
 	}
 
 	return &types.QueryPricesResponse{Data: string(pricesBytes)}, nil
