@@ -32,9 +32,25 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 	}
 
 	observations = append(observations, msg.Creator)
+	lastTotalPower := k.stakingKeeper.GetLastTotalPower(ctx)
+	halfLastTotalPower := lastTotalPower.Quo(sdk.NewInt(2))
+	var totalPower sdk.Int
 
 	for _, validatorAddr := range observations {
+		val, found := k.stakingKeeper.GetValidator(ctx, sdk.ValAddress(validatorAddr))
 
+		if found {
+			consensusPower := val.GetConsensusPower(val.GetBondedTokens())
+			totalPower = totalPower.Add(sdk.NewInt(consensusPower))
+		}
+	}
+
+	if totalPower.GT(halfLastTotalPower) {
+		// Remove observations
+		store.Delete(depositorKeyBytes)
+
+		// Grant user tokens on exchange
+		//
 	}
 
 	return &types.MsgObserveDepositResponse{}, nil

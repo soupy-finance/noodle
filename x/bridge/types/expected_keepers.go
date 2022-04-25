@@ -9,6 +9,7 @@ import (
 type StakingKeeper interface {
 	// Methods imported from staking should be defined here
 	GetValidator(ctx sdk.Context, address sdk.ValAddress) (validator staking.Validator, found bool)
+	GetLastTotalPower(ctx sdk.Context) sdk.Int
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
