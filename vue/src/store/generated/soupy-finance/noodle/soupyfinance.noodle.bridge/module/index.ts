@@ -4,10 +4,12 @@ import { StdFee } from "@cosmjs/launchpad";
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
+import { MsgWithdraw } from "./types/bridge/tx";
 import { MsgObserveDeposit } from "./types/bridge/tx";
 
 
 const types = [
+  ["/soupyfinance.noodle.bridge.MsgWithdraw", MsgWithdraw],
   ["/soupyfinance.noodle.bridge.MsgObserveDeposit", MsgObserveDeposit],
   
 ];
@@ -41,6 +43,7 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
 
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
+    msgWithdraw: (data: MsgWithdraw): EncodeObject => ({ typeUrl: "/soupyfinance.noodle.bridge.MsgWithdraw", value: MsgWithdraw.fromPartial( data ) }),
     msgObserveDeposit: (data: MsgObserveDeposit): EncodeObject => ({ typeUrl: "/soupyfinance.noodle.bridge.MsgObserveDeposit", value: MsgObserveDeposit.fromPartial( data ) }),
     
   };

@@ -48369,6 +48369,8 @@ definitions:
       method.
   soupyfinance.noodle.bridge.MsgObserveDepositResponse:
     type: object
+  soupyfinance.noodle.bridge.MsgWithdrawResponse:
+    type: object
   soupyfinance.noodle.bridge.Params:
     type: object
     properties:

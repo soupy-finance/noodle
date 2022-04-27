@@ -18,6 +18,15 @@ const (
 
 	// DepositsKey defines the observed deposits store key
 	DepositsKey = "deposits"
+
+	// WithdrawalCountsKey defines the withdrawal counts store key
+	WithdrawalCountsKey = "withdrawal_counts"
+
+	// WithdrawalsKey defines the withdrawals store key
+	WithdrawalsKey = "withdrawals"
+
+	// WithdrawalApprovalsKey defines the withdrawal approvals store key
+	WithdrawalApprovalsKey = "withdrawal_approvals"
 )
 
 func KeyPrefix(p string) []byte {

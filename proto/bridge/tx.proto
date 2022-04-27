@@ -8,6 +8,7 @@ option go_package = "github.com/soupy-finance/noodle/x/bridge/types";
 // Msg defines the Msg service.
 service Msg {
       rpc ObserveDeposit(MsgObserveDeposit) returns (MsgObserveDepositResponse);
+  rpc Withdraw(MsgWithdraw) returns (MsgWithdrawResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -17,9 +18,20 @@ message MsgObserveDeposit {
   string depositor = 3;
   string depositId = 4;
   string quantity = 5;
+  string Asset = 6;
 }
 
 message MsgObserveDepositResponse {
+}
+
+message MsgWithdraw {
+  string creator = 1;
+  string asset = 2;
+  string quantity = 3;
+  string chainId = 4;
+}
+
+message MsgWithdrawResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

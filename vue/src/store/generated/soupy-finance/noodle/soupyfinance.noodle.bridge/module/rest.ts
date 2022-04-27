@@ -11,6 +11,8 @@
 
 export type BridgeMsgObserveDepositResponse = object;
 
+export type BridgeMsgWithdrawResponse = object;
+
 /**
  * Params defines the parameters for the module.
  */

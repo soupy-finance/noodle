@@ -7,14 +7,29 @@ export interface MsgObserveDeposit {
   creator: string;
   chainId: string;
   depositor: string;
+  depositId: string;
+  quantity: string;
+  Asset: string;
 }
 
 export interface MsgObserveDepositResponse {}
+
+export interface MsgWithdraw {
+  creator: string;
+  asset: string;
+  amount: string;
+  chain: string;
+}
+
+export interface MsgWithdrawResponse {}
 
 const baseMsgObserveDeposit: object = {
   creator: "",
   chainId: "",
   depositor: "",
+  depositId: "",
+  quantity: "",
+  Asset: "",
 };
 
 export const MsgObserveDeposit = {
@@ -27,6 +42,15 @@ export const MsgObserveDeposit = {
     }
     if (message.depositor !== "") {
       writer.uint32(26).string(message.depositor);
+    }
+    if (message.depositId !== "") {
+      writer.uint32(34).string(message.depositId);
+    }
+    if (message.quantity !== "") {
+      writer.uint32(42).string(message.quantity);
+    }
+    if (message.Asset !== "") {
+      writer.uint32(50).string(message.Asset);
     }
     return writer;
   },
@@ -46,6 +70,15 @@ export const MsgObserveDeposit = {
           break;
         case 3:
           message.depositor = reader.string();
+          break;
+        case 4:
+          message.depositId = reader.string();
+          break;
+        case 5:
+          message.quantity = reader.string();
+          break;
+        case 6:
+          message.Asset = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -72,6 +105,21 @@ export const MsgObserveDeposit = {
     } else {
       message.depositor = "";
     }
+    if (object.depositId !== undefined && object.depositId !== null) {
+      message.depositId = String(object.depositId);
+    } else {
+      message.depositId = "";
+    }
+    if (object.quantity !== undefined && object.quantity !== null) {
+      message.quantity = String(object.quantity);
+    } else {
+      message.quantity = "";
+    }
+    if (object.Asset !== undefined && object.Asset !== null) {
+      message.Asset = String(object.Asset);
+    } else {
+      message.Asset = "";
+    }
     return message;
   },
 
@@ -80,6 +128,9 @@ export const MsgObserveDeposit = {
     message.creator !== undefined && (obj.creator = message.creator);
     message.chainId !== undefined && (obj.chainId = message.chainId);
     message.depositor !== undefined && (obj.depositor = message.depositor);
+    message.depositId !== undefined && (obj.depositId = message.depositId);
+    message.quantity !== undefined && (obj.quantity = message.quantity);
+    message.Asset !== undefined && (obj.Asset = message.Asset);
     return obj;
   },
 
@@ -99,6 +150,21 @@ export const MsgObserveDeposit = {
       message.depositor = object.depositor;
     } else {
       message.depositor = "";
+    }
+    if (object.depositId !== undefined && object.depositId !== null) {
+      message.depositId = object.depositId;
+    } else {
+      message.depositId = "";
+    }
+    if (object.quantity !== undefined && object.quantity !== null) {
+      message.quantity = object.quantity;
+    } else {
+      message.quantity = "";
+    }
+    if (object.Asset !== undefined && object.Asset !== null) {
+      message.Asset = object.Asset;
+    } else {
+      message.Asset = "";
     }
     return message;
   },
@@ -156,12 +222,162 @@ export const MsgObserveDepositResponse = {
   },
 };
 
+const baseMsgWithdraw: object = {
+  creator: "",
+  asset: "",
+  amount: "",
+  chain: "",
+};
+
+export const MsgWithdraw = {
+  encode(message: MsgWithdraw, writer: Writer = Writer.create()): Writer {
+    if (message.creator !== "") {
+      writer.uint32(10).string(message.creator);
+    }
+    if (message.asset !== "") {
+      writer.uint32(18).string(message.asset);
+    }
+    if (message.amount !== "") {
+      writer.uint32(26).string(message.amount);
+    }
+    if (message.chain !== "") {
+      writer.uint32(34).string(message.chain);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgWithdraw {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgWithdraw } as MsgWithdraw;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.creator = reader.string();
+          break;
+        case 2:
+          message.asset = reader.string();
+          break;
+        case 3:
+          message.amount = reader.string();
+          break;
+        case 4:
+          message.chain = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MsgWithdraw {
+    const message = { ...baseMsgWithdraw } as MsgWithdraw;
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator);
+    } else {
+      message.creator = "";
+    }
+    if (object.asset !== undefined && object.asset !== null) {
+      message.asset = String(object.asset);
+    } else {
+      message.asset = "";
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = String(object.amount);
+    } else {
+      message.amount = "";
+    }
+    if (object.chain !== undefined && object.chain !== null) {
+      message.chain = String(object.chain);
+    } else {
+      message.chain = "";
+    }
+    return message;
+  },
+
+  toJSON(message: MsgWithdraw): unknown {
+    const obj: any = {};
+    message.creator !== undefined && (obj.creator = message.creator);
+    message.asset !== undefined && (obj.asset = message.asset);
+    message.amount !== undefined && (obj.amount = message.amount);
+    message.chain !== undefined && (obj.chain = message.chain);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<MsgWithdraw>): MsgWithdraw {
+    const message = { ...baseMsgWithdraw } as MsgWithdraw;
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator;
+    } else {
+      message.creator = "";
+    }
+    if (object.asset !== undefined && object.asset !== null) {
+      message.asset = object.asset;
+    } else {
+      message.asset = "";
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = object.amount;
+    } else {
+      message.amount = "";
+    }
+    if (object.chain !== undefined && object.chain !== null) {
+      message.chain = object.chain;
+    } else {
+      message.chain = "";
+    }
+    return message;
+  },
+};
+
+const baseMsgWithdrawResponse: object = {};
+
+export const MsgWithdrawResponse = {
+  encode(_: MsgWithdrawResponse, writer: Writer = Writer.create()): Writer {
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgWithdrawResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgWithdrawResponse } as MsgWithdrawResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): MsgWithdrawResponse {
+    const message = { ...baseMsgWithdrawResponse } as MsgWithdrawResponse;
+    return message;
+  },
+
+  toJSON(_: MsgWithdrawResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<MsgWithdrawResponse>): MsgWithdrawResponse {
+    const message = { ...baseMsgWithdrawResponse } as MsgWithdrawResponse;
+    return message;
+  },
+};
+
 /** Msg defines the Msg service. */
 export interface Msg {
-  /** this line is used by starport scaffolding # proto/tx/rpc */
   ObserveDeposit(
     request: MsgObserveDeposit
   ): Promise<MsgObserveDepositResponse>;
+  /** this line is used by starport scaffolding # proto/tx/rpc */
+  Withdraw(request: MsgWithdraw): Promise<MsgWithdrawResponse>;
 }
 
 export class MsgClientImpl implements Msg {
@@ -181,6 +397,16 @@ export class MsgClientImpl implements Msg {
     return promise.then((data) =>
       MsgObserveDepositResponse.decode(new Reader(data))
     );
+  }
+
+  Withdraw(request: MsgWithdraw): Promise<MsgWithdrawResponse> {
+    const data = MsgWithdraw.encode(request).finish();
+    const promise = this.rpc.request(
+      "soupyfinance.noodle.bridge.Msg",
+      "Withdraw",
+      data
+    );
+    return promise.then((data) => MsgWithdrawResponse.decode(new Reader(data)));
   }
 }
 
