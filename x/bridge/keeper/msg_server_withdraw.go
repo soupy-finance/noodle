@@ -54,16 +54,10 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 		panic("invalid withdrawal count")
 	}
 
-	// Store reference in state for validators
-	// The withdrawal chain needs to store the withdrawal id once executed to prevent duplication
-	store = prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.WithdrawalsKey))
-	withdrawalKeyBytes := []byte(msg.Creator + ":" + withdrawalId.String())
-	withdrawalInfoBytes := []byte(msg.Asset + ":" + msg.Quantity + ":" + msg.ChainId)
-	store.Set(withdrawalKeyBytes, withdrawalInfoBytes)
-
 	// Increment and store withdrawal id
 	withdrawalId.Add(sdk.NewInt(1))
 	store.Set(withdrawalCountKeyBytes, []byte(withdrawalId.String()))
 
 	return &types.MsgWithdrawResponse{}, nil
+	// The withdrawal chain needs to store the withdrawal id once executed to prevent duplication
 }

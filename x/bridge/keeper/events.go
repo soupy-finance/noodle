@@ -5,8 +5,8 @@ import (
 	"github.com/soupy-finance/noodle/x/bridge/types"
 )
 
-func EmitWithdrawEvent(ctx sdk.Context, account sdk.AccAddress, asset string, quantity string, chainId string) {
+func EmitWithdrawEvent(ctx sdk.Context, account sdk.AccAddress, wId string, asset string, quantity string, chainId string) {
 	ctx.EventManager().EmitEvent(
-		types.NewWithdrawEvent(account, asset, quantity, chainId),
+		types.NewWithdrawEvent(account, wId, asset, quantity, chainId),
 	)
 }
