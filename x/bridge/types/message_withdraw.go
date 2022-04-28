@@ -9,12 +9,12 @@ const TypeMsgWithdraw = "withdraw"
 
 var _ sdk.Msg = &MsgWithdraw{}
 
-func NewMsgWithdraw(creator string, asset string, amount string, chain string) *MsgWithdraw {
+func NewMsgWithdraw(creator string, asset string, quantity string, chainId string) *MsgWithdraw {
 	return &MsgWithdraw{
-		Creator: creator,
-		Asset:   asset,
-		Amount:  amount,
-		Chain:   chain,
+		Creator:  creator,
+		Asset:    asset,
+		Quantity: quantity,
+		ChainId:  chainId,
 	}
 }
 

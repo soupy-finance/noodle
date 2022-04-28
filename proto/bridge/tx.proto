@@ -18,7 +18,7 @@ message MsgObserveDeposit {
   string depositor = 3;
   string depositId = 4;
   string quantity = 5;
-  string Asset = 6;
+  string asset = 6;
 }
 
 message MsgObserveDepositResponse {
