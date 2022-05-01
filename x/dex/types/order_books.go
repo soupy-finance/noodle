@@ -4,24 +4,40 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type Side byte
+type OrderType string
+
+const (
+	Bid Side = 'b'
+	Ask Side = 'a'
+)
+
+const (
+	MarketOrder        OrderType = "market"
+	LimitOrder         OrderType = "limit"
+	LimitFoKOrder      OrderType = "limit_fok"
+	LimitIoCOrder      OrderType = "limit_ioc"
+	LimitPostOnlyOrder OrderType = "limit_post_only"
+)
+
 type OrderBook struct {
 	Market    string
-	Side      byte // b = buy, s = sell
+	Side      Side
 	BestPrice sdk.Int
 	Levels    []BookLevel
 }
 
 type BookLevel struct {
 	Market string
-	Side   byte
+	Side   Side
 	Price  sdk.Int
 	Orders []Order
 }
 
 type Order struct {
-	Account  string
+	Account  sdk.AccAddress
 	Market   string
-	Side     byte
+	Side     Side
 	Price    sdk.Int
 	Quantity sdk.Int
 }
@@ -34,4 +50,13 @@ type StoredLevel struct {
 type StoredOrder struct {
 	Account  string
 	Quantity string
+}
+
+func (t *OrderType) IsValid() bool {
+	switch *t {
+	case MarketOrder, LimitOrder, LimitFoKOrder, LimitIoCOrder, LimitPostOnlyOrder:
+		return true
+	default:
+		return false
+	}
 }

@@ -9,28 +9,15 @@ import (
 )
 
 // Returns book without AMM orders
-func (k Keeper) GetPureBook(ctx sdk.Context, market string, side byte) (*types.OrderBook, error) {
-	// Validate arguments
-	if side != 'b' && side != 's' {
-		return nil, types.InvalidSide
-	}
-
-	markets := k.Markets(ctx)
-
-	_, ok := markets[market]
-
-	if !ok {
-		return nil, types.InvalidMarket
-	}
-
+func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*types.OrderBook, error) {
 	book := types.OrderBook{
 		Market: market,
 		Side:   side,
 	}
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.BooksStoreKey))
-	marketKeyBytes := []byte(market)
-	storedBookBytes := store.Get(marketKeyBytes)
+	bookKeyBytes := []byte(market + ":" + string(side))
+	storedBookBytes := store.Get(bookKeyBytes)
 	var storedBook []types.StoredLevel
 
 	if storedBookBytes != nil {
@@ -63,7 +50,7 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side byte) (*types.O
 		for j, storedOrder := range storedLevel.Orders {
 			order := &level.Orders[j]
 			*order = types.Order{
-				Account: storedOrder.Account,
+				Account: sdk.AccAddress(storedOrder.Account),
 				Market:  market,
 				Side:    side,
 				Price:   level.Price,
@@ -86,7 +73,7 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side byte) (*types.O
 }
 
 // Returns book with AMM orders
-func (k Keeper) GetVirtualBook(ctx sdk.Context, market string, side byte) (*types.OrderBook, error) {
+func (k Keeper) GetVirtualBook(ctx sdk.Context, market string, side types.Side) (*types.OrderBook, error) {
 	book, err := k.GetPureBook(ctx, market, side)
 
 	if err != nil {
@@ -112,21 +99,21 @@ func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 		for j, order := range level.Orders {
 			storedOrder := &storedLevel.Orders[j]
 			*storedOrder = types.StoredOrder{
-				Account:  order.Account,
+				Account:  order.Account.String(),
 				Quantity: order.Quantity.String(),
 			}
 		}
 	}
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.BooksStoreKey))
-	marketKeyBytes := []byte(book.Market)
+	bookKeyBytes := []byte(book.Market + ":" + string(book.Side))
 	storedBookBytes, err := json.Marshal(storedBook)
 
 	if err != nil {
 		return err
 	}
 
-	store.Set(marketKeyBytes, storedBookBytes)
+	store.Set(bookKeyBytes, storedBookBytes)
 	return nil
 }
 
@@ -145,7 +132,7 @@ func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order) error {
 			inserted = true
 			break
 		} else if (order.Side == 'b' && level.Price.LT(order.Price)) ||
-			(order.Side == 's' && level.Price.GT(order.Price)) {
+			(order.Side == 'a' && level.Price.GT(order.Price)) {
 			newLevel := types.BookLevel{
 				Market: order.Market,
 				Side:   order.Side,

@@ -28130,7 +28130,9 @@ paths:
                 type: object
                 properties:
                   markets:
-                    type: string
+                    type: object
+                    additionalProperties:
+                      type: string
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -48430,11 +48432,15 @@ definitions:
             additionalProperties:
               type: string
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  soupyfinance.noodle.dex.MsgCreateOrderResponse:
+    type: object
   soupyfinance.noodle.dex.Params:
     type: object
     properties:
       markets:
-        type: string
+        type: object
+        additionalProperties:
+          type: string
     description: Params defines the parameters for the module.
   soupyfinance.noodle.dex.QueryParamsResponse:
     type: object
@@ -48444,7 +48450,9 @@ definitions:
         type: object
         properties:
           markets:
-            type: string
+            type: object
+            additionalProperties:
+              type: string
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   soupyfinance.noodle.oracle.MsgUpdatePricesResponse:
     type: object

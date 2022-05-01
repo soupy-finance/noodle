@@ -9,11 +9,13 @@
  * ---------------------------------------------------------------
  */
 
+export type DexMsgCreateOrderResponse = object;
+
 /**
  * Params defines the parameters for the module.
  */
 export interface DexParams {
-  markets?: string;
+  markets?: Record<string, string>;
 }
 
 /**
