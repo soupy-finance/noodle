@@ -27,6 +27,9 @@ const (
 
 	// WithdrawalApprovalsKey defines the withdrawal approvals store key
 	WithdrawalApprovalsKey = "withdrawal_approvals"
+
+	// AccountLinksKey defines the account linkage store key
+	AccountLinksKey = "account_links"
 )
 
 func KeyPrefix(p string) []byte {

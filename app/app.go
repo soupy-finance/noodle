@@ -99,6 +99,9 @@ import (
 	bridgemodule "github.com/soupy-finance/noodle/x/bridge"
 	bridgemodulekeeper "github.com/soupy-finance/noodle/x/bridge/keeper"
 	bridgemoduletypes "github.com/soupy-finance/noodle/x/bridge/types"
+	dexmodule "github.com/soupy-finance/noodle/x/dex"
+	dexmodulekeeper "github.com/soupy-finance/noodle/x/dex/keeper"
+	dexmoduletypes "github.com/soupy-finance/noodle/x/dex/types"
 	oraclemodule "github.com/soupy-finance/noodle/x/oracle"
 	oraclemodulekeeper "github.com/soupy-finance/noodle/x/oracle/keeper"
 	oraclemoduletypes "github.com/soupy-finance/noodle/x/oracle/types"
@@ -157,6 +160,7 @@ var (
 		monitoringp.AppModuleBasic{},
 		oraclemodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
+		dexmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -171,6 +175,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		oraclemoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		bridgemoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		dexmoduletypes.ModuleName:      {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -233,6 +238,8 @@ type App struct {
 	OracleKeeper oraclemodulekeeper.Keeper
 
 	BridgeKeeper bridgemodulekeeper.Keeper
+
+	DexKeeper dexmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -271,6 +278,7 @@ func New(
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		oraclemoduletypes.StoreKey,
 		bridgemoduletypes.StoreKey,
+		dexmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -406,6 +414,17 @@ func New(
 	)
 	bridgeModule := bridgemodule.NewAppModule(appCodec, app.BridgeKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.DexKeeper = *dexmodulekeeper.NewKeeper(
+		appCodec,
+		keys[dexmoduletypes.StoreKey],
+		keys[dexmoduletypes.MemStoreKey],
+		app.GetSubspace(dexmoduletypes.ModuleName),
+
+		app.BankKeeper,
+		app.StakingKeeper,
+	)
+	dexModule := dexmodule.NewAppModule(appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -448,6 +467,7 @@ func New(
 		monitoringModule,
 		oracleModule,
 		bridgeModule,
+		dexModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -476,6 +496,7 @@ func New(
 		monitoringptypes.ModuleName,
 		oraclemoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		dexmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -500,6 +521,7 @@ func New(
 		monitoringptypes.ModuleName,
 		oraclemoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		dexmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -529,6 +551,7 @@ func New(
 		monitoringptypes.ModuleName,
 		oraclemoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		dexmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -554,6 +577,7 @@ func New(
 		monitoringModule,
 		oracleModule,
 		bridgeModule,
+		dexModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
@@ -745,6 +769,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(oraclemoduletypes.ModuleName)
 	paramsKeeper.Subspace(bridgemoduletypes.ModuleName)
+	paramsKeeper.Subspace(dexmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

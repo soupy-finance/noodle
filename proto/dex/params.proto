@@ -1,0 +1,13 @@
+syntax = "proto3";
+package soupyfinance.noodle.dex;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/soupy-finance/noodle/x/dex/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+  map<string, string> markets = 1 [(gogoproto.moretags) = "yaml:\"markets\""];
+}

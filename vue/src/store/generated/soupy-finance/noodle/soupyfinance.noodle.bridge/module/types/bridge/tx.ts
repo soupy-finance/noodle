@@ -9,7 +9,7 @@ export interface MsgObserveDeposit {
   depositor: string;
   depositId: string;
   quantity: string;
-  Asset: string;
+  asset: string;
 }
 
 export interface MsgObserveDepositResponse {}
@@ -17,8 +17,8 @@ export interface MsgObserveDepositResponse {}
 export interface MsgWithdraw {
   creator: string;
   asset: string;
-  amount: string;
-  chain: string;
+  quantity: string;
+  chainId: string;
 }
 
 export interface MsgWithdrawResponse {}
@@ -29,7 +29,7 @@ const baseMsgObserveDeposit: object = {
   depositor: "",
   depositId: "",
   quantity: "",
-  Asset: "",
+  asset: "",
 };
 
 export const MsgObserveDeposit = {
@@ -49,8 +49,8 @@ export const MsgObserveDeposit = {
     if (message.quantity !== "") {
       writer.uint32(42).string(message.quantity);
     }
-    if (message.Asset !== "") {
-      writer.uint32(50).string(message.Asset);
+    if (message.asset !== "") {
+      writer.uint32(50).string(message.asset);
     }
     return writer;
   },
@@ -78,7 +78,7 @@ export const MsgObserveDeposit = {
           message.quantity = reader.string();
           break;
         case 6:
-          message.Asset = reader.string();
+          message.asset = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -115,10 +115,10 @@ export const MsgObserveDeposit = {
     } else {
       message.quantity = "";
     }
-    if (object.Asset !== undefined && object.Asset !== null) {
-      message.Asset = String(object.Asset);
+    if (object.asset !== undefined && object.asset !== null) {
+      message.asset = String(object.asset);
     } else {
-      message.Asset = "";
+      message.asset = "";
     }
     return message;
   },
@@ -130,7 +130,7 @@ export const MsgObserveDeposit = {
     message.depositor !== undefined && (obj.depositor = message.depositor);
     message.depositId !== undefined && (obj.depositId = message.depositId);
     message.quantity !== undefined && (obj.quantity = message.quantity);
-    message.Asset !== undefined && (obj.Asset = message.Asset);
+    message.asset !== undefined && (obj.asset = message.asset);
     return obj;
   },
 
@@ -161,10 +161,10 @@ export const MsgObserveDeposit = {
     } else {
       message.quantity = "";
     }
-    if (object.Asset !== undefined && object.Asset !== null) {
-      message.Asset = object.Asset;
+    if (object.asset !== undefined && object.asset !== null) {
+      message.asset = object.asset;
     } else {
-      message.Asset = "";
+      message.asset = "";
     }
     return message;
   },
@@ -225,8 +225,8 @@ export const MsgObserveDepositResponse = {
 const baseMsgWithdraw: object = {
   creator: "",
   asset: "",
-  amount: "",
-  chain: "",
+  quantity: "",
+  chainId: "",
 };
 
 export const MsgWithdraw = {
@@ -237,11 +237,11 @@ export const MsgWithdraw = {
     if (message.asset !== "") {
       writer.uint32(18).string(message.asset);
     }
-    if (message.amount !== "") {
-      writer.uint32(26).string(message.amount);
+    if (message.quantity !== "") {
+      writer.uint32(26).string(message.quantity);
     }
-    if (message.chain !== "") {
-      writer.uint32(34).string(message.chain);
+    if (message.chainId !== "") {
+      writer.uint32(34).string(message.chainId);
     }
     return writer;
   },
@@ -260,10 +260,10 @@ export const MsgWithdraw = {
           message.asset = reader.string();
           break;
         case 3:
-          message.amount = reader.string();
+          message.quantity = reader.string();
           break;
         case 4:
-          message.chain = reader.string();
+          message.chainId = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -285,15 +285,15 @@ export const MsgWithdraw = {
     } else {
       message.asset = "";
     }
-    if (object.amount !== undefined && object.amount !== null) {
-      message.amount = String(object.amount);
+    if (object.quantity !== undefined && object.quantity !== null) {
+      message.quantity = String(object.quantity);
     } else {
-      message.amount = "";
+      message.quantity = "";
     }
-    if (object.chain !== undefined && object.chain !== null) {
-      message.chain = String(object.chain);
+    if (object.chainId !== undefined && object.chainId !== null) {
+      message.chainId = String(object.chainId);
     } else {
-      message.chain = "";
+      message.chainId = "";
     }
     return message;
   },
@@ -302,8 +302,8 @@ export const MsgWithdraw = {
     const obj: any = {};
     message.creator !== undefined && (obj.creator = message.creator);
     message.asset !== undefined && (obj.asset = message.asset);
-    message.amount !== undefined && (obj.amount = message.amount);
-    message.chain !== undefined && (obj.chain = message.chain);
+    message.quantity !== undefined && (obj.quantity = message.quantity);
+    message.chainId !== undefined && (obj.chainId = message.chainId);
     return obj;
   },
 
@@ -319,15 +319,15 @@ export const MsgWithdraw = {
     } else {
       message.asset = "";
     }
-    if (object.amount !== undefined && object.amount !== null) {
-      message.amount = object.amount;
+    if (object.quantity !== undefined && object.quantity !== null) {
+      message.quantity = object.quantity;
     } else {
-      message.amount = "";
+      message.quantity = "";
     }
-    if (object.chain !== undefined && object.chain !== null) {
-      message.chain = object.chain;
+    if (object.chainId !== undefined && object.chainId !== null) {
+      message.chainId = object.chainId;
     } else {
-      message.chain = "";
+      message.chainId = "";
     }
     return message;
   },

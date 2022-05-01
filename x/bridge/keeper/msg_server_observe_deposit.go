@@ -25,8 +25,9 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		return nil, types.InvalidChain
 	}
 
+	depositor := k.ExternalAddressToDexAddress(ctx, msg.Depositor)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.DepositsKey))
-	depositorKeyBytes := []byte(msg.DepositId + ":" + msg.ChainId + ":" + msg.Depositor + ":" + msg.Quantity + ":" + msg.Asset)
+	depositorKeyBytes := []byte(msg.DepositId + ":" + msg.ChainId + ":" + depositor + ":" + msg.Quantity + ":" + msg.Asset)
 	observationsBytes := store.Get(depositorKeyBytes)
 	var observations []string
 
@@ -70,7 +71,7 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 			panic(err)
 		}
 
-		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sdk.AccAddress(msg.Depositor), coins)
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sdk.AccAddress(depositor), coins)
 
 		if err != nil {
 			panic(err)
@@ -78,4 +79,16 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 	}
 
 	return &types.MsgObserveDepositResponse{}, nil
+}
+
+func (k Keeper) ExternalAddressToDexAddress(ctx sdk.Context, address string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountLinksKey))
+	addressKeyBytes := []byte(address)
+	dexAddressBytes := store.Get(addressKeyBytes)
+
+	if dexAddressBytes == nil {
+		return address
+	}
+
+	return string(dexAddressBytes)
 }

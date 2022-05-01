@@ -28115,6 +28115,45 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  /soupyfinance/noodle/dex/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: SoupyfinanceNoodleDexParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+                properties:
+                  markets:
+                    type: string
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   '/soupy-finance/noodle/oracle/prices/{assets}':
     get:
       summary: Queries a list of Prices items.
@@ -48390,6 +48429,22 @@ definitions:
             type: object
             additionalProperties:
               type: string
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
+  soupyfinance.noodle.dex.Params:
+    type: object
+    properties:
+      markets:
+        type: string
+    description: Params defines the parameters for the module.
+  soupyfinance.noodle.dex.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+        properties:
+          markets:
+            type: string
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   soupyfinance.noodle.oracle.MsgUpdatePricesResponse:
     type: object

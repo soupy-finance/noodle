@@ -54,10 +54,13 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 		panic("invalid withdrawal count")
 	}
 
+	// Alert validators they need to sign
+	EmitWithdrawEvent(ctx, msg.Creator, withdrawalId.String(), msg.Asset, msg.Quantity, msg.ChainId)
+	// The withdrawal chain needs to store the withdrawal id once executed to prevent duplication
+
 	// Increment and store withdrawal id
 	withdrawalId.Add(sdk.NewInt(1))
 	store.Set(withdrawalCountKeyBytes, []byte(withdrawalId.String()))
 
 	return &types.MsgWithdrawResponse{}, nil
-	// The withdrawal chain needs to store the withdrawal id once executed to prevent duplication
 }
