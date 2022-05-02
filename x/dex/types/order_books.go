@@ -52,6 +52,11 @@ type StoredOrder struct {
 	Quantity string
 }
 
+func NewOrderType(orderTypeStr string) (OrderType, bool) {
+	orderType := OrderType(orderTypeStr)
+	return orderType, orderType.IsValid()
+}
+
 func (t *OrderType) IsValid() bool {
 	switch *t {
 	case MarketOrder, LimitOrder, LimitFoKOrder, LimitIoCOrder, LimitPostOnlyOrder:

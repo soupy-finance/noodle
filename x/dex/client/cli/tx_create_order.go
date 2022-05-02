@@ -29,10 +29,15 @@ func CmdCreateOrder() *cobra.Command {
 				return err
 			}
 
+			side, err := strconv.ParseBool(argSide)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgCreateOrder(
 				clientCtx.GetFromAddress().String(),
 				argMarket,
-				argSide,
+				side,
 				argOrderType,
 				argPrice,
 				argQuantity,

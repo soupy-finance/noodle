@@ -9,7 +9,7 @@ const TypeMsgCreateOrder = "create_order"
 
 var _ sdk.Msg = &MsgCreateOrder{}
 
-func NewMsgCreateOrder(creator string, market string, side string, orderType string, price string, quantity string) *MsgCreateOrder {
+func NewMsgCreateOrder(creator string, market string, side bool, orderType string, price string, quantity string) *MsgCreateOrder {
 	return &MsgCreateOrder{
 		Creator:   creator,
 		Market:    market,

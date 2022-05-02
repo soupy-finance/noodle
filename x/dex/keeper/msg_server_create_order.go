@@ -19,14 +19,14 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		side = 'a'
 	}
 
-	orderType := types.OrderType(msg.OrderType)
+	orderType, ok := types.NewOrderType(msg.OrderType)
 
-	if !orderType.IsValid() {
+	if !ok {
 		return nil, types.InvalidOrderType
 	}
 
 	markets := k.Markets(ctx)
-	_, ok := markets[msg.Market]
+	_, ok = markets[msg.Market]
 
 	if !ok {
 		return nil, types.InvalidMarket
@@ -44,6 +44,7 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		return nil, types.InvalidQuantity
 	}
 
+	// Create order object and get order book
 	order := types.Order{
 		Account:  sdk.AccAddress(msg.Creator),
 		Market:   msg.Market,
@@ -51,11 +52,33 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		Price:    price,
 		Quantity: quantity,
 	}
+	book, err := k.Keeper.GetVirtualBook(ctx, msg.Market, side)
 
+	if err != nil {
+		return nil, err
+	}
+
+	// Process orders by type
 	switch orderType {
 	case types.MarketOrder:
+		err = k.Keeper.ProcessMarketOrder(ctx, &order, book)
+	case types.LimitOrder:
+	case types.LimitFoKOrder:
+	case types.LimitIoCOrder:
+	case types.LimitPostOnlyOrder:
+	}
 
+	if err != nil {
+		return nil, err
 	}
 
 	return &types.MsgCreateOrderResponse{}, nil
+}
+
+func (k Keeper) ProcessMarketOrder(ctx sdk.Context, order *types.Order, book *types.OrderBook) error {
+	if len(book.Levels) == 0 {
+		return types.NoOrdersInBook
+	}
+
+	return nil
 }
