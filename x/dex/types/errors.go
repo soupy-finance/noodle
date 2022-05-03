@@ -8,9 +8,8 @@ import (
 
 // x/dex module sentinel errors
 var (
-	InvalidMarket    = sdkerrors.Register(ModuleName, 1100, "invalid market")
-	InvalidPrice     = sdkerrors.Register(ModuleName, 1101, "invalid price")
-	InvalidQuantity  = sdkerrors.Register(ModuleName, 1102, "invalid quantity")
-	InvalidOrderType = sdkerrors.Register(ModuleName, 1103, "invalid order type")
-	NoOrdersInBook   = sdkerrors.Register(ModuleName, 1104, "no orders in book")
+	InvalidMarket       = sdkerrors.Register(ModuleName, 1100, "invalid market")
+	InvalidOrderType    = sdkerrors.Register(ModuleName, 1101, "invalid order type")
+	NoOrdersInBook      = sdkerrors.Register(ModuleName, 1102, "no orders in book")
+	InsufficientBalance = sdkerrors.Register(ModuleName, 1103, "insufficient balance")
 )

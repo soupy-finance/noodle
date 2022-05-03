@@ -10,7 +10,7 @@ import (
 )
 
 type PriceInfo struct {
-	val    sdk.Int
+	val    sdk.Dec
 	weight int64
 }
 type ValPriceList struct {
@@ -27,7 +27,7 @@ func (p ValPriceList) Swap(i, j int) {
 func (p ValPriceList) Less(i, j int) bool { return p.prices[i].val.LT(p.prices[j].val) }
 
 func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) string {
-	var aggPrice sdk.Int
+	var aggPrice sdk.Dec
 	var priceList ValPriceList
 	k.stakingKeeper.IterateBondedValidatorsByPower(ctx, k.GetValidatorPriceFn(ctx, asset, &priceList))
 
@@ -55,10 +55,10 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 		// Get price from store and update prices slice
 		valAssetKeyBytes := append(validator.GetOperator(), []byte(":"+asset)...)
 		priceBytes := store.Get(valAssetKeyBytes)
-		price, ok := sdk.NewIntFromString(string(priceBytes))
+		price, err := sdk.NewDecFromStr(string(priceBytes))
 
-		if !ok {
-			panic(types.PriceAggError)
+		if err != nil {
+			panic(err)
 		}
 
 		weight := validator.GetConsensusPower(validator.GetBondedTokens())

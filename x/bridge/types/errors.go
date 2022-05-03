@@ -8,7 +8,6 @@ import (
 
 // x/bridge module sentinel errors
 var (
-	NotValidator    = sdkerrors.Register(ModuleName, 1100, "not a validator")
-	InvalidChain    = sdkerrors.Register(ModuleName, 1101, "invalid chain")
-	InvalidQuantity = sdkerrors.Register(ModuleName, 1102, "invalid quantity")
+	NotValidator = sdkerrors.Register(ModuleName, 1100, "not a validator")
+	InvalidChain = sdkerrors.Register(ModuleName, 1101, "invalid chain")
 )

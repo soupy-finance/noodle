@@ -19,15 +19,15 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 		return nil, types.InvalidChain
 	}
 
-	quantity, ok := sdk.NewIntFromString(msg.Quantity)
+	quantity, err := sdk.NewDecFromStr(msg.Quantity)
 
-	if !ok {
-		return nil, types.InvalidQuantity
+	if err != nil {
+		return nil, err
 	}
 
 	// Send coins to module and burn
-	coins := sdk.NewCoins(sdk.NewCoin(msg.Asset, quantity))
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(msg.Creator), types.ModuleName, coins)
+	coins := sdk.NewCoins(sdk.NewCoin(msg.Asset, sdk.NewIntFromBigInt(quantity.BigInt())))
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(msg.Creator), types.ModuleName, coins)
 
 	if err != nil {
 		return nil, err

@@ -32,10 +32,10 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 	book.Levels = make([]types.BookLevel, len(storedBook), len(storedBook)+1)
 
 	for i, storedLevel := range storedBook {
-		price, ok := sdk.NewIntFromString(storedLevel.Price)
+		price, err := sdk.NewDecFromStr(storedLevel.Price)
 
-		if !ok {
-			panic("invalid stored price")
+		if err != nil {
+			panic(err)
 		}
 
 		level := &book.Levels[i]
@@ -55,18 +55,14 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 				Side:    side,
 				Price:   level.Price,
 			}
-			quantity, ok := sdk.NewIntFromString(storedOrder.Quantity)
+			quantity, err := sdk.NewDecFromStr(storedOrder.Quantity)
 
-			if !ok {
-				panic("invalid stored quantity")
+			if err != nil {
+				panic(err)
 			}
 
 			order.Quantity = quantity
 		}
-	}
-
-	if len(book.Levels) > 0 {
-		book.BestPrice = book.Levels[0].Price
 	}
 
 	return &book, nil
