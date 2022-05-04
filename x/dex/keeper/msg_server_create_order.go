@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/soupy-finance/noodle/x/dex/types"
@@ -98,7 +99,7 @@ func (k Keeper) ProcessMarketOrder(ctx sdk.Context, order *types.Order, bids *ty
 }
 
 func (k Keeper) ProcessLimitOrder(ctx sdk.Context, order *types.Order, bids *types.OrderBook, asks *types.OrderBook) error {
-	if !SufficientBalanceForLimitOrder(order) {
+	if !k.SufficientBalanceForLimitOrder(ctx, order) {
 		return types.InsufficientBalance
 	}
 
@@ -117,21 +118,42 @@ func (k Keeper) ProcessLimitOrder(ctx sdk.Context, order *types.Order, bids *typ
 	zero := sdk.ZeroDec()
 	executedQuantity := zero
 	executedCost := zero
+	assets := strings.Split(order.Market, "/")
+
+	var sendAsset string
+	var recvAsset string
+
+	if order.Side == types.Ask {
+		sendAsset = assets[0]
+		recvAsset = assets[1]
+	} else {
+		sendAsset = assets[1]
+		recvAsset = assets[0]
+	}
 
 	// Match existing orders
-	for len(fillBook.Levels) > 0 && OrderIsLimitMatched(order, fillBook) && order.Quantity.GT(zero) {
+	for len(fillBook.Levels) > 0 && LimitOrderIsMatched(order, fillBook) && order.Quantity.GT(zero) {
 		level := fillBook.Levels[0]
 		orders := level.Orders
 		// Panics if the level is empty
 		bestOffer := level.Orders[0]
 
 		localExecQuantity := sdk.MinDec(order.Quantity, bestOffer.Quantity)
-		localExecCost := localExecQuantity.Mul(bestOffer.Price)
+		localExecQuote := localExecQuantity.Mul(bestOffer.Price)
 		executedQuantity = executedQuantity.Add(localExecQuantity)
-		executedCost = executedCost.Add(localExecCost)
+		executedCost = executedCost.Add(localExecQuote)
 		order.Quantity = order.Quantity.Sub(localExecQuantity)
 		bestOffer.Quantity = bestOffer.Quantity.Sub(localExecQuantity)
 
+		// Transfer asset directly from taker to maker
+		takerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(localExecQuote.BigInt())))
+		k.bankKeeper.SendCoins(ctx, order.Account, bestOffer.Account, takerSendCoins)
+
+		// Transfer main asset from esrow to taker
+		takerRecvCoins := sdk.NewCoins(sdk.NewCoin(recvAsset, sdk.NewIntFromBigInt(localExecQuantity.BigInt())))
+		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, order.Account, takerRecvCoins)
+
+		// Remove price level if empty
 		if bestOffer.Quantity.LTE(zero) {
 			level.Orders = orders[1:]
 
@@ -143,13 +165,45 @@ func (k Keeper) ProcessLimitOrder(ctx sdk.Context, order *types.Order, bids *typ
 
 	// Insert remaining part of order into book
 	if order.Quantity.GT(zero) {
+		inserted := false
 
+		for i := 0; i < len(insertBook.Levels); i++ {
+			level := insertBook.Levels[i]
+			at, past := AtOrPastInsertionPoint(order, &level)
+
+			if at {
+				level.Orders = append(level.Orders, *order)
+				break
+			} else if past {
+				// Insert new level at index
+				// Include order in level's orders
+				break
+			}
+		}
+
+		if !inserted {
+			// Apppend new level at end
+			// Include order in level's orders
+		}
+
+		// Store tokens in escrow
+		makerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(order.Quantity.BigInt())))
+		k.bankKeeper.SendCoinsFromAccountToModule(ctx, order.Account, types.ModuleName, makerSendCoins)
 	}
 
 	return nil
 }
 
-func OrderIsLimitMatched(order *types.Order, book *types.OrderBook) bool {
+func (k Keeper) SufficientBalanceForLimitOrder(ctx sdk.Context, order *types.Order) bool {
+	// Panics if market is not in a valid format
+	quoteAsset := strings.Split(order.Market, "/")[1]
+	balance := k.bankKeeper.GetBalance(ctx, order.Account, quoteAsset)
+	quantityInt := sdk.NewIntFromBigInt(order.Quantity.BigInt())
+
+	return balance.Amount.GTE(quantityInt)
+}
+
+func LimitOrderIsMatched(order *types.Order, book *types.OrderBook) bool {
 	switch order.Side {
 	case types.Bid:
 		return order.Price.GTE(book.BestPrice())
@@ -160,9 +214,13 @@ func OrderIsLimitMatched(order *types.Order, book *types.OrderBook) bool {
 	}
 }
 
-func SufficientBalanceForLimitOrder(order *types.Order) bool {
-	// Implement
-	//
-
-	return true
+func AtOrPastInsertionPoint(order *types.Order, level *types.BookLevel) (at, past bool) {
+	switch order.Side {
+	case types.Bid:
+		return order.Price.GT(level.Price), order.Price.Equal(level.Price)
+	case types.Ask:
+		return order.Price.LT(level.Price), order.Price.Equal(level.Price)
+	default:
+		return false, false
+	}
 }
