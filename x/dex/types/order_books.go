@@ -6,6 +6,8 @@ import (
 
 type Side byte
 type OrderType string
+type OrderFlag string
+type OrderFlags map[OrderFlag]bool
 
 const (
 	Bid Side = 'b'
@@ -13,11 +15,15 @@ const (
 )
 
 const (
-	MarketOrder        OrderType = "market"
-	LimitOrder         OrderType = "limit"
-	LimitFoKOrder      OrderType = "limit_fok"
-	LimitIoCOrder      OrderType = "limit_ioc"
-	LimitPostOnlyOrder OrderType = "limit_post_only"
+	MarketOrder OrderType = "market"
+	LimitOrder  OrderType = "limit"
+)
+
+const (
+	NoFlag       OrderFlag = "none"
+	FoKFlag      OrderFlag = "fill_or_kill"
+	IoCFlag      OrderFlag = "immediate_or_cancel"
+	PostOnlyFlag OrderFlag = "post_only"
 )
 
 type OrderBook struct {
@@ -39,6 +45,7 @@ type Order struct {
 	Side     Side
 	Price    sdk.Dec
 	Quantity sdk.Dec
+	Flags    OrderFlags
 }
 
 type StoredLevel struct {
@@ -83,7 +90,7 @@ func NewOrderType(orderTypeStr string) (OrderType, bool) {
 
 func (t *OrderType) IsValid() bool {
 	switch *t {
-	case MarketOrder, LimitOrder, LimitFoKOrder, LimitIoCOrder, LimitPostOnlyOrder:
+	case MarketOrder, LimitOrder:
 		return true
 	default:
 		return false
@@ -101,4 +108,31 @@ func (book *OrderBook) BestPrice() sdk.Dec {
 
 func (book *OrderBook) RemoveTopLevel() {
 	book.Levels = book.Levels[1:]
+}
+
+func NewOrderFlag(flagStr string) (OrderFlag, bool) {
+	flag := OrderFlag(flagStr)
+	return flag, flag.IsValid()
+}
+
+func (flag *OrderFlag) IsValid() bool {
+	switch *flag {
+	case NoFlag, FoKFlag, IoCFlag, PostOnlyFlag:
+		return true
+	default:
+		return false
+	}
+}
+
+func NewOrderFlags(flags []string) (OrderFlags, bool) {
+	orderFlags := OrderFlags{}
+	ok := true
+
+	for _, flagStr := range flags {
+		flag, _ok := NewOrderFlag(flagStr)
+		ok = ok && _ok
+		orderFlags[flag] = true
+	}
+
+	return orderFlags, ok
 }

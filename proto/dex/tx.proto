@@ -18,6 +18,7 @@ message MsgCreateOrder {
   string orderType = 4;
   string price = 5;
   string quantity = 6;
+  repeated string flags = 7;
 }
 
 message MsgCreateOrderResponse {
