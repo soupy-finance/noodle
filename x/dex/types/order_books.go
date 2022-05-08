@@ -46,6 +46,7 @@ type Order struct {
 	Price    sdk.Dec
 	Quantity sdk.Dec
 	Flags    OrderFlags
+	IsAmm    bool
 }
 
 type StoredLevel struct {

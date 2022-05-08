@@ -113,6 +113,33 @@ func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 	return nil
 }
 
+func (k Keeper) SaveVirtualBook(ctx sdk.Context, book *types.OrderBook) error {
+	// Remove AMM orders
+	for i, level := range book.Levels {
+		for j, order := range level.Orders {
+			if order.IsAmm {
+				level.Orders = append(level.Orders[:j], level.Orders[j+1:]...)
+				j--
+			}
+		}
+
+		if len(level.Orders) == 0 {
+			book.Levels = append(book.Levels[:i], book.Levels[i+1:]...)
+			i--
+		}
+	}
+
+	if len(book.Levels) == 0 {
+		store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.BooksStoreKey))
+		bookKeyBytes := []byte(book.Market + ":" + string(book.Side))
+		store.Delete(bookKeyBytes)
+		return nil
+	}
+
+	err := k.SavePureBook(ctx, book)
+	return err
+}
+
 func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order) error {
 	book, err := k.GetPureBook(ctx, order.Market, order.Side)
 

@@ -81,6 +81,18 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		return nil, err
 	}
 
+	err = k.SaveVirtualBook(ctx, bids)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.SaveVirtualBook(ctx, asks)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.MsgCreateOrderResponse{}, nil
 }
 
@@ -100,18 +112,14 @@ func (k Keeper) ProcessMarketOrder(
 	}
 
 	// Match orders
-	execSent := zeroDec
-	execRecv := zeroDec
-	sendAsset, recvAsset := GetSendAndRecvAssets(order)
-
-	for len(book.Levels) > 0 && order.Quantity.GT(zeroDec) {
-		execRecv, execSent = k.MatchNextBestOffer(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
-	}
+	execSent, execRecv, sendAsset, recvAsset := k.MatchUntilEmpty(ctx, order, book)
 
 	if order.Quantity.GT(zeroDec) {
 		return types.InsufficientLiquidity
 	}
 
+	EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
+	EmitBalanceChangeEvent(ctx, order.Account, recvAsset, execRecv)
 	return nil
 }
 
@@ -140,14 +148,7 @@ func (k Keeper) ProcessLimitOrder(
 	// Process post-only flag
 	//
 
-	execRecv := zeroDec
-	execSent := zeroDec
-	sendAsset, recvAsset := GetSendAndRecvAssets(order)
-
-	// Match existing orders
-	for len(fillBook.Levels) > 0 && LimitOrderIsMatched(order, fillBook) && order.Quantity.GT(zeroDec) {
-		execRecv, execSent = k.MatchNextBestOffer(ctx, order, fillBook, sendAsset, recvAsset, execSent, execRecv)
-	}
+	execSent, execRecv, sendAsset, recvAsset := k.MatchUntilEmpty(ctx, order, fillBook)
 
 	// Process other flags
 	//
@@ -161,6 +162,8 @@ func (k Keeper) ProcessLimitOrder(
 		}
 	}
 
+	EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
+	EmitBalanceChangeEvent(ctx, order.Account, recvAsset, execRecv)
 	return nil
 }
 
@@ -193,7 +196,35 @@ func (k Keeper) SufficientBalanceForQuantity(
 	return balance.Amount.GTE(quantityInt)
 }
 
-func (k Keeper) MatchNextBestOffer(
+func (k Keeper) MatchUntilEmpty(
+	ctx sdk.Context,
+	order *types.Order,
+	book *types.OrderBook,
+) (execSent, execRecv sdk.Dec, sendAsset, recvAsset string) {
+	assets := strings.Split(order.Market, "/")
+	execRecv = zeroDec
+	execSent = zeroDec
+
+	if order.Side == types.Ask {
+		sendAsset = assets[0]
+		recvAsset = assets[1]
+
+		for len(book.Levels) > 0 && order.Quantity.GT(zeroDec) {
+			execSent, execRecv = k.MatchNextBestBid(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
+		}
+	} else {
+		sendAsset = assets[1]
+		recvAsset = assets[0]
+
+		for len(book.Levels) > 0 && order.Quantity.GT(zeroDec) {
+			execSent, execRecv = k.MatchNextBestAsk(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
+		}
+	}
+
+	return
+}
+
+func (k Keeper) MatchNextBestAsk(
 	ctx sdk.Context,
 	order *types.Order,
 	book *types.OrderBook,
@@ -207,20 +238,20 @@ func (k Keeper) MatchNextBestOffer(
 	// Panics if the level is empty
 	bestOffer := level.Orders[0]
 
-	localExecQuantity := sdk.MinDec(order.Quantity, bestOffer.Quantity)
-	localExecQuote := localExecQuantity.Mul(bestOffer.Price)
-	execSent = execSent.Add(localExecQuote)
-	execRecv = execRecv.Add(localExecQuantity)
-	order.Quantity = order.Quantity.Sub(localExecQuantity)
-	bestOffer.Quantity = bestOffer.Quantity.Sub(localExecQuantity)
-
-	// Transfer asset from esrow to taker
-	takerRecvCoins := sdk.NewCoins(sdk.NewCoin(recvAsset, sdk.NewIntFromBigInt(localExecQuantity.BigInt())))
-	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, order.Account, takerRecvCoins)
+	localExecRecv := sdk.MinDec(order.Quantity, bestOffer.Quantity)
+	localExecSent := localExecRecv.Mul(bestOffer.Price)
+	execSent = execSent.Add(localExecSent)
+	execRecv = execRecv.Add(localExecRecv)
+	order.Quantity = order.Quantity.Sub(localExecRecv)
+	bestOffer.Quantity = bestOffer.Quantity.Sub(localExecRecv)
 
 	// Transfer asset directly from taker to maker
-	takerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(localExecQuote.BigInt())))
+	takerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(localExecSent.BigInt())))
 	k.bankKeeper.SendCoins(ctx, order.Account, bestOffer.Account, takerSendCoins)
+
+	// Transfer asset from escrow to taker
+	takerRecvCoins := sdk.NewCoins(sdk.NewCoin(recvAsset, sdk.NewIntFromBigInt(localExecRecv.BigInt())))
+	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, order.Account, takerRecvCoins)
 
 	// Remove price level if empty
 	if bestOffer.Quantity.LTE(zeroDec) {
@@ -231,6 +262,49 @@ func (k Keeper) MatchNextBestOffer(
 		}
 	}
 
+	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecRecv, bestOffer.Price)
+	return execSent, execRecv
+}
+
+func (k Keeper) MatchNextBestBid(
+	ctx sdk.Context,
+	order *types.Order,
+	book *types.OrderBook,
+	sendAsset string,
+	recvAsset string,
+	execSent sdk.Dec,
+	execRecv sdk.Dec,
+) (sdk.Dec, sdk.Dec) {
+	level := book.Levels[0]
+	orders := level.Orders
+	// Panics if the level is empty
+	bestOffer := level.Orders[0]
+
+	localExecSent := sdk.MinDec(order.Quantity, bestOffer.Quantity)
+	localExecRecv := localExecSent.Mul(bestOffer.Price)
+	execSent = execSent.Add(localExecSent)
+	execRecv = execRecv.Add(localExecRecv)
+	order.Quantity = order.Quantity.Sub(localExecSent)
+	bestOffer.Quantity = bestOffer.Quantity.Sub(localExecSent)
+
+	// Transfer asset directly from taker to maker
+	takerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(localExecSent.BigInt())))
+	k.bankKeeper.SendCoins(ctx, order.Account, bestOffer.Account, takerSendCoins)
+
+	// Transfer asset from escrow to taker
+	takerRecvCoins := sdk.NewCoins(sdk.NewCoin(recvAsset, sdk.NewIntFromBigInt(localExecRecv.BigInt())))
+	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, order.Account, takerRecvCoins)
+
+	// Remove price level if empty
+	if bestOffer.Quantity.LTE(zeroDec) {
+		level.Orders = orders[1:]
+
+		if len(level.Orders) == 0 {
+			book.RemoveTopLevel()
+		}
+	}
+
+	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecSent, bestOffer.Price)
 	return execSent, execRecv
 }
 
