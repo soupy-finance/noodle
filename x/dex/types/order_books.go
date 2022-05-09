@@ -1,6 +1,10 @@
 package types
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -40,6 +44,7 @@ type BookLevel struct {
 }
 
 type Order struct {
+	Id       string
 	Account  sdk.AccAddress
 	Market   string
 	Side     Side
@@ -55,8 +60,17 @@ type StoredLevel struct {
 }
 
 type StoredOrder struct {
+	Id       string
 	Account  string
 	Quantity string
+}
+
+type StoredAccountOrder struct {
+	Id       string
+	Account  string
+	Quantity string
+	Price    string
+	Side     string
 }
 
 func NewSide(sideByte byte) (Side, bool) {
@@ -136,4 +150,10 @@ func NewOrderFlags(flags []string) (OrderFlags, bool) {
 	}
 
 	return orderFlags, ok
+}
+
+func NewOrderId(account sdk.AccAddress, orderCount uint64) string {
+	orderCountString := strconv.FormatUint(orderCount, 10)
+	hash := sha256.Sum256([]byte(account.String() + ":" + orderCountString))
+	return hex.EncodeToString(hash[:])
 }

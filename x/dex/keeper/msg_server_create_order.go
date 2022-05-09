@@ -53,9 +53,15 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		return nil, types.InvalidOrderFlags
 	}
 
+	// Create order id from account address and historical order count
+	account := sdk.AccAddress(msg.Creator)
+	accountOrdersCount := k.GetAccountOrdersCount(ctx, account)
+	orderId := types.NewOrderId(account, accountOrdersCount)
+
 	// Create order object and get order book
 	order := types.Order{
-		Account:  sdk.AccAddress(msg.Creator),
+		Id:       orderId,
+		Account:  account,
 		Market:   msg.Market,
 		Side:     side,
 		Price:    price,
@@ -155,11 +161,21 @@ func (k Keeper) ProcessLimitOrder(
 
 	// Insert remaining part of order into book
 	if order.Quantity.GT(zeroDec) {
-		err := k.InsertOrderIntoBook(ctx, order, insertBook, sendAsset)
+		err := k.InsertOrder(ctx, order, insertBook, false)
 
 		if err != nil {
 			return err
 		}
+
+		// Store tokens in escrow
+		makerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(order.Quantity.BigInt())))
+		k.bankKeeper.SendCoinsFromAccountToModule(ctx, order.Account, types.ModuleName, makerSendCoins)
+
+		if err != nil {
+			return err
+		}
+
+		EmitAddOfferEvent(ctx, order.Account, order.Id, order.Market, order.Quantity, order.Price, order.Side)
 	}
 
 	EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
@@ -260,6 +276,10 @@ func (k Keeper) MatchNextBestAsk(
 		if len(level.Orders) == 0 {
 			book.RemoveTopLevel()
 		}
+
+		EmitRemoveOfferEvent(ctx, bestOffer.Account, bestOffer.Id)
+	} else {
+		EmitUpdateOfferEvent(ctx, bestOffer.Account, bestOffer.Id, bestOffer.Quantity)
 	}
 
 	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecRecv, bestOffer.Price)
@@ -308,46 +328,6 @@ func (k Keeper) MatchNextBestBid(
 	return execSent, execRecv
 }
 
-func (k Keeper) InsertOrderIntoBook(ctx sdk.Context, order *types.Order, book *types.OrderBook, asset string) error {
-	inserted := false
-
-	for i := 0; i < len(book.Levels); i++ {
-		level := book.Levels[i]
-		at, past := AtOrPastInsertionPoint(order, &level)
-
-		if at {
-			level.Orders = append(level.Orders, *order)
-			break
-		} else if past {
-			newLevel := types.BookLevel{
-				Market: order.Market,
-				Side:   order.Side,
-				Price:  order.Price,
-				Orders: []types.Order{*order},
-			}
-			book.Levels = append(book.Levels[:i+1], book.Levels[i:]...)
-			book.Levels[i] = newLevel
-			break
-		}
-	}
-
-	if !inserted {
-		newLevel := types.BookLevel{
-			Market: order.Market,
-			Side:   order.Side,
-			Price:  order.Price,
-			Orders: []types.Order{*order},
-		}
-		book.Levels = append(book.Levels, newLevel)
-	}
-
-	// Store tokens in escrow
-	makerSendCoins := sdk.NewCoins(sdk.NewCoin(asset, sdk.NewIntFromBigInt(order.Quantity.BigInt())))
-	k.bankKeeper.SendCoinsFromAccountToModule(ctx, order.Account, types.ModuleName, makerSendCoins)
-
-	return nil
-}
-
 func LimitOrderIsMatched(order *types.Order, book *types.OrderBook) bool {
 	switch order.Side {
 	case types.Bid:
@@ -356,17 +336,6 @@ func LimitOrderIsMatched(order *types.Order, book *types.OrderBook) bool {
 		return order.Price.LTE(book.BestPrice())
 	default:
 		return false
-	}
-}
-
-func AtOrPastInsertionPoint(order *types.Order, level *types.BookLevel) (at, past bool) {
-	switch order.Side {
-	case types.Bid:
-		return order.Price.GT(level.Price), order.Price.Equal(level.Price)
-	case types.Ask:
-		return order.Price.LT(level.Price), order.Price.Equal(level.Price)
-	default:
-		return true, true
 	}
 }
 

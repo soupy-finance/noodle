@@ -22,7 +22,7 @@ service Query {
 
 // Queries a list of Books items.
 	rpc Books(QueryBooksRequest) returns (QueryBooksResponse) {
-		option (google.api.http).get = "/soupy-finance/noodle/dex/books/{market}/{amm}";
+		option (google.api.http).get = "/soupy-finance/noodle/dex/books/{market}";
 	}
 
 // this line is used by starport scaffolding # 2

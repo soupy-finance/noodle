@@ -18,6 +18,12 @@ const (
 
 	// BooksStoreKey defines the books store key
 	BooksStoreKey = "books"
+
+	// AccountOrdersStoreKey defines the account orders store key
+	AccountOrdersStoreKey = "account_orders"
+
+	// AccountOrdersCountKey defines the account orders count key
+	AccountOrdersCountKey = "account_orders_count"
 )
 
 func KeyPrefix(p string) []byte {

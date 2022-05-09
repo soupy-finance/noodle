@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"encoding/json"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -82,6 +83,55 @@ func (k Keeper) GetVirtualBook(ctx sdk.Context, market string, side types.Side) 
 	return book, nil
 }
 
+func (k Keeper) GetAccountOrders(ctx sdk.Context, account sdk.AccAddress) []types.Order {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersStoreKey))
+	accountKeyBytes := []byte(account.String())
+	storedOrdersBytes := store.Get(accountKeyBytes)
+	var storedOrders []types.StoredAccountOrder
+
+	if storedOrdersBytes != nil {
+		err := json.Unmarshal(storedOrdersBytes, &storedOrders)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	orders := make([]types.Order, len(storedOrders))
+
+	for i, order := range storedOrders {
+		side, ok := types.NewSide(order.Side[0])
+
+		if !ok {
+			panic("invalid stored account order")
+		}
+
+		orders[i] = types.Order{
+			Id:       order.Id,
+			Account:  account,
+			Quantity: sdk.MustNewDecFromStr(order.Quantity),
+			Price:    sdk.MustNewDecFromStr(order.Price),
+			Side:     side,
+		}
+	}
+
+	return orders
+}
+
+func (k Keeper) GetAccountOrdersCount(ctx sdk.Context, account sdk.AccAddress) (ordersCount uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersCountKey))
+	accountKeyBytes := []byte(account.String())
+	ordersCountBytes := store.Get(accountKeyBytes)
+
+	if ordersCountBytes == nil {
+		ordersCount = 0
+	} else {
+		ordersCount = binary.BigEndian.Uint64(ordersCountBytes)
+	}
+
+	return
+}
+
 func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 	storedBook := make([]types.StoredLevel, len(book.Levels))
 
@@ -140,8 +190,12 @@ func (k Keeper) SaveVirtualBook(ctx sdk.Context, book *types.OrderBook) error {
 	return err
 }
 
-func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order) error {
-	book, err := k.GetPureBook(ctx, order.Market, order.Side)
+func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order, book *types.OrderBook, save bool) error {
+	var err error
+
+	if book == nil {
+		book, err = k.GetPureBook(ctx, order.Market, order.Side)
+	}
 
 	if err != nil {
 		return err
@@ -181,6 +235,24 @@ func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order) error {
 		book.Levels = append(book.Levels, newLevel)
 	}
 
-	err = k.SavePureBook(ctx, book)
-	return err
+	if save {
+		err = k.SaveVirtualBook(ctx, book)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	k.IncrementAccountOrdersCount(ctx, order.Account)
+	return nil
+}
+
+func (k Keeper) IncrementAccountOrdersCount(ctx sdk.Context, account sdk.AccAddress) {
+	var ordersCountBytes []byte
+	ordersCount := k.GetAccountOrdersCount(ctx, account)
+	binary.BigEndian.PutUint64(ordersCountBytes, ordersCount+1)
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersCountKey))
+	accountKeyBytes := []byte(account.String())
+	store.Set(accountKeyBytes, ordersCountBytes)
 }
