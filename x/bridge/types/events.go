@@ -24,5 +24,3 @@ func NewWithdrawEvent(account string, wId string, asset string, quantity string,
 		sdk.NewAttribute(AttributeKeyChainId, chainId),
 	)
 }
-
-func NewObserveDepositEvent()

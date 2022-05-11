@@ -14,7 +14,7 @@ export interface QueryParamsResponse {
 }
 
 export interface QueryPricesRequest {
-  assets: string;
+  assets: string[];
 }
 
 export interface QueryPricesResponse {
@@ -125,8 +125,8 @@ export const QueryPricesRequest = {
     message: QueryPricesRequest,
     writer: Writer = Writer.create()
   ): Writer {
-    if (message.assets !== "") {
-      writer.uint32(10).string(message.assets);
+    for (const v of message.assets) {
+      writer.uint32(10).string(v!);
     }
     return writer;
   },
@@ -135,11 +135,12 @@ export const QueryPricesRequest = {
     const reader = input instanceof Uint8Array ? new Reader(input) : input;
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseQueryPricesRequest } as QueryPricesRequest;
+    message.assets = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.assets = reader.string();
+          message.assets.push(reader.string());
           break;
         default:
           reader.skipType(tag & 7);
@@ -151,26 +152,32 @@ export const QueryPricesRequest = {
 
   fromJSON(object: any): QueryPricesRequest {
     const message = { ...baseQueryPricesRequest } as QueryPricesRequest;
+    message.assets = [];
     if (object.assets !== undefined && object.assets !== null) {
-      message.assets = String(object.assets);
-    } else {
-      message.assets = "";
+      for (const e of object.assets) {
+        message.assets.push(String(e));
+      }
     }
     return message;
   },
 
   toJSON(message: QueryPricesRequest): unknown {
     const obj: any = {};
-    message.assets !== undefined && (obj.assets = message.assets);
+    if (message.assets) {
+      obj.assets = message.assets.map((e) => e);
+    } else {
+      obj.assets = [];
+    }
     return obj;
   },
 
   fromPartial(object: DeepPartial<QueryPricesRequest>): QueryPricesRequest {
     const message = { ...baseQueryPricesRequest } as QueryPricesRequest;
+    message.assets = [];
     if (object.assets !== undefined && object.assets !== null) {
-      message.assets = object.assets;
-    } else {
-      message.assets = "";
+      for (const e of object.assets) {
+        message.assets.push(e);
+      }
     }
     return message;
   },

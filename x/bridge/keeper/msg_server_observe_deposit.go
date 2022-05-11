@@ -18,7 +18,7 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		return nil, types.NotValidator
 	}
 
-	chain_contracts := k.ChainContracts(ctx)
+	chain_contracts := k.ChainContractsParsed(ctx)
 	_, ok := chain_contracts[msg.ChainId]
 
 	if !ok {

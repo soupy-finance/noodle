@@ -28,7 +28,7 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 	}
 
 	// Iterate assets and update their prices for the validator
-	assets := k.Assets(ctx)
+	assets := k.AssetsParsed(ctx)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PricesKey))
 
 	for _, asset := range assets {

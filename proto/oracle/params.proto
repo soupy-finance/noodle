@@ -9,5 +9,5 @@ option go_package = "github.com/soupy-finance/noodle/x/oracle/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
   
-  repeated string assets = 1 [(gogoproto.moretags) = "yaml:\"assets\""];
+  string assets = 1 [(gogoproto.moretags) = "yaml:\"assets\""];
 }

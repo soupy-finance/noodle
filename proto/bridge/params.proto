@@ -9,5 +9,5 @@ option go_package = "github.com/soupy-finance/noodle/x/bridge/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
   
-  map<string, string> chainContracts = 1 [(gogoproto.moretags) = "yaml:\"chain_contracts\""];
+  string chainContracts = 1 [(gogoproto.moretags) = "yaml:\"chain_contracts\""];
 }

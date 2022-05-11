@@ -15,7 +15,7 @@ export type OracleMsgUpdatePricesResponse = object;
  * Params defines the parameters for the module.
  */
 export interface OracleParams {
-  assets?: string[];
+  assets?: string;
 }
 
 /**
@@ -245,7 +245,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @summary Queries a list of Prices items.
    * @request GET:/soupy-finance/noodle/oracle/prices/{assets}
    */
-  queryPrices = (assets: string, params: RequestParams = {}) =>
+  queryPrices = (assets: string[], params: RequestParams = {}) =>
     this.request<OracleQueryPricesResponse, RpcStatus>({
       path: `/soupy-finance/noodle/oracle/prices/${assets}`,
       method: "GET",

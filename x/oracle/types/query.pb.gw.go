@@ -67,7 +67,7 @@ func request_Query_Prices_0(ctx context.Context, marshaler runtime.Marshaler, cl
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "assets")
 	}
 
-	protoReq.Assets, err = runtime.String(val)
+	protoReq.Assets, err = runtime.StringSlice(val, ",")
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "assets", err)
@@ -94,7 +94,7 @@ func local_request_Query_Prices_0(ctx context.Context, marshaler runtime.Marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "assets")
 	}
 
-	protoReq.Assets, err = runtime.String(val)
+	protoReq.Assets, err = runtime.StringSlice(val, ",")
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "assets", err)

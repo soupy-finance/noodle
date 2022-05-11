@@ -2,6 +2,7 @@ package cli
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -17,7 +18,8 @@ func CmdPrices() *cobra.Command {
 		Short: "Query prices",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			reqAssets := args[0]
+			reqAssetsStr := args[0]
+			reqAssets := strings.Split(reqAssetsStr, ",")
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

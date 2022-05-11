@@ -12,7 +12,7 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check inputs
-	chain_contracts := k.ChainContracts(ctx)
+	chain_contracts := k.ChainContractsParsed(ctx)
 	_, ok := chain_contracts[msg.ChainId]
 
 	if !ok {

@@ -15,7 +15,18 @@ export type DexMsgCreateOrderResponse = object;
  * Params defines the parameters for the module.
  */
 export interface DexParams {
-  markets?: Record<string, string>;
+  markets?: string;
+}
+
+export interface DexQueryBookResponse {
+  pure?: string;
+  amm?: string;
+}
+
+export interface DexQueryBooksResponse {
+  bids?: string;
+  asks?: string;
+  amm?: string;
 }
 
 /**
@@ -237,13 +248,45 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * No description
    *
    * @tags Query
+   * @name QueryBook
+   * @summary Queries a list of Book items.
+   * @request GET:/soupy-finance/noodle/dex/book/{market}/{side}
+   */
+  queryBook = (market: string, side: boolean, params: RequestParams = {}) =>
+    this.request<DexQueryBookResponse, RpcStatus>({
+      path: `/soupy-finance/noodle/dex/book/${market}/${side}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryBooks
+   * @summary Queries a list of Books items.
+   * @request GET:/soupy-finance/noodle/dex/books/{market}
+   */
+  queryBooks = (market: string, params: RequestParams = {}) =>
+    this.request<DexQueryBooksResponse, RpcStatus>({
+      path: `/soupy-finance/noodle/dex/books/${market}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
    * @name QueryParams
    * @summary Parameters queries the parameters of the module.
-   * @request GET:/soupyfinance/noodle/dex/params
+   * @request GET:/soupy-finance/noodle/dex/params
    */
   queryParams = (params: RequestParams = {}) =>
     this.request<DexQueryParamsResponse, RpcStatus>({
-      path: `/soupyfinance/noodle/dex/params`,
+      path: `/soupy-finance/noodle/dex/params`,
       method: "GET",
       format: "json",
       ...params,

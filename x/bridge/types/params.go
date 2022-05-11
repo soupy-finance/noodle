@@ -11,8 +11,10 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 
 var (
 	KeyChainContracts     = []byte("ChainContracts")
-	DefaultChainContracts = map[string]string{"ethereum": "0x0"}
+	DefaultChainContracts = "{\"ethereum\": \"0x0\"}"
 )
+
+type ChainContractsParsed map[string]string
 
 // ParamKeyTable the param key table for launch module
 func ParamKeyTable() paramtypes.KeyTable {
@@ -21,7 +23,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams(
-	chainContracts map[string]string,
+	chainContracts string,
 ) Params {
 	return Params{
 		ChainContracts: chainContracts,

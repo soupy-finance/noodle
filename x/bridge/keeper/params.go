@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"encoding/json"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/soupy-finance/noodle/x/bridge/types"
 )
@@ -18,7 +20,20 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 }
 
 // ChainContracts returns the ChainContracts param
-func (k Keeper) ChainContracts(ctx sdk.Context) (res map[string]string) {
+func (k Keeper) ChainContracts(ctx sdk.Context) (res string) {
 	k.paramstore.Get(ctx, types.KeyChainContracts, &res)
 	return
+}
+
+func (k Keeper) ChainContractsParsed(ctx sdk.Context) types.ChainContractsParsed {
+	var chainContractsStr string
+	var chainContracts types.ChainContractsParsed
+	k.paramstore.Get(ctx, types.KeyChainContracts, &chainContractsStr)
+	err := json.Unmarshal([]byte(chainContractsStr), &chainContracts)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return chainContracts
 }

@@ -12,8 +12,10 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 var (
 	KeyAssets = []byte("Assets")
 	// TODO: Determine the default value
-	DefaultAssets []string = []string{"wbtc", "eth"}
+	DefaultAssets = "[\"wbtc\", \"eth\"]"
 )
+
+type AssetsParsed []string
 
 // ParamKeyTable the param key table for launch module
 func ParamKeyTable() paramtypes.KeyTable {
@@ -22,7 +24,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams(
-	assets []string,
+	assets string,
 ) Params {
 	return Params{
 		Assets: assets,

@@ -26,7 +26,7 @@ func (k Keeper) Book(goCtx context.Context, req *types.QueryBookRequest) (*types
 		side = "a"
 	}
 
-	markets := k.Markets(ctx)
+	markets := k.MarketsParsed(ctx)
 	_, ok := markets[req.Market]
 
 	if !ok {

@@ -33,7 +33,7 @@ message QueryParamsResponse {
 }
 
 message QueryPricesRequest {
-  string assets = 1;
+  repeated string assets = 1;
 }
 
 message QueryPricesResponse {

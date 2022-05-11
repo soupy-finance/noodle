@@ -12,8 +12,10 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 var (
 	KeyMarkets = []byte("Markets")
 	// TODO: Determine the default value
-	DefaultMarkets = map[string]string{"wbtc/usdc": "{}", "eth/usdc": "{}"}
+	DefaultMarkets = "{\"wbtc-usdc\": \"{}\", \"eth-usdc\": \"{}\"}"
 )
+
+type MarketsParsed map[string]string
 
 // ParamKeyTable the param key table for launch module
 func ParamKeyTable() paramtypes.KeyTable {
@@ -22,7 +24,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates a new Params instance
 func NewParams(
-	markets map[string]string,
+	markets string,
 ) Params {
 	return Params{
 		Markets: markets,

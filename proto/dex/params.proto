@@ -9,5 +9,5 @@ option go_package = "github.com/soupy-finance/noodle/x/dex/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
   
-  map<string, string> markets = 1 [(gogoproto.moretags) = "yaml:\"markets\""];
+  string markets = 1 [(gogoproto.moretags) = "yaml:\"markets\""];
 }

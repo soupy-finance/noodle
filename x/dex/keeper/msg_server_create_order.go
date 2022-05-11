@@ -28,7 +28,7 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		return nil, types.InvalidOrderType
 	}
 
-	markets := k.Markets(ctx)
+	markets := k.MarketsParsed(ctx)
 	_, ok = markets[msg.Market]
 
 	if !ok {

@@ -5,15 +5,15 @@ export const protobufPackage = "soupyfinance.noodle.oracle";
 
 /** Params defines the parameters for the module. */
 export interface Params {
-  assets: string[];
+  assets: string;
 }
 
 const baseParams: object = { assets: "" };
 
 export const Params = {
   encode(message: Params, writer: Writer = Writer.create()): Writer {
-    for (const v of message.assets) {
-      writer.uint32(10).string(v!);
+    if (message.assets !== "") {
+      writer.uint32(10).string(message.assets);
     }
     return writer;
   },
@@ -22,12 +22,11 @@ export const Params = {
     const reader = input instanceof Uint8Array ? new Reader(input) : input;
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseParams } as Params;
-    message.assets = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.assets.push(reader.string());
+          message.assets = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -39,32 +38,26 @@ export const Params = {
 
   fromJSON(object: any): Params {
     const message = { ...baseParams } as Params;
-    message.assets = [];
     if (object.assets !== undefined && object.assets !== null) {
-      for (const e of object.assets) {
-        message.assets.push(String(e));
-      }
+      message.assets = String(object.assets);
+    } else {
+      message.assets = "";
     }
     return message;
   },
 
   toJSON(message: Params): unknown {
     const obj: any = {};
-    if (message.assets) {
-      obj.assets = message.assets.map((e) => e);
-    } else {
-      obj.assets = [];
-    }
+    message.assets !== undefined && (obj.assets = message.assets);
     return obj;
   },
 
   fromPartial(object: DeepPartial<Params>): Params {
     const message = { ...baseParams } as Params;
-    message.assets = [];
     if (object.assets !== undefined && object.assets !== null) {
-      for (const e of object.assets) {
-        message.assets.push(e);
-      }
+      message.assets = object.assets;
+    } else {
+      message.assets = "";
     }
     return message;
   },

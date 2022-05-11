@@ -18,7 +18,7 @@ func (k Keeper) Books(goCtx context.Context, req *types.QueryBooksRequest) (*typ
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate market
-	markets := k.Markets(ctx)
+	markets := k.MarketsParsed(ctx)
 	_, ok := markets[req.Market]
 
 	if !ok {

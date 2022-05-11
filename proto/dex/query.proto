@@ -13,7 +13,7 @@ option go_package = "github.com/soupy-finance/noodle/x/dex/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/soupyfinance/noodle/dex/params";
+    option (google.api.http).get = "/soupy-finance/noodle/dex/params";
   }
   // Queries a list of Book items.
 	rpc Book(QueryBookRequest) returns (QueryBookResponse) {

@@ -13,9 +13,9 @@ var _ = strconv.Itoa(0)
 
 func CmdBooks() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "books [market] [amm]",
+		Use:   "books [market]",
 		Short: "Query books",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			reqMarket := args[0]
 

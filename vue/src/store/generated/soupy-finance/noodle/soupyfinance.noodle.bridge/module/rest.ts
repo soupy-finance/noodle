@@ -17,7 +17,7 @@ export type BridgeMsgWithdrawResponse = object;
  * Params defines the parameters for the module.
  */
 export interface BridgeParams {
-  chainContracts?: Record<string, string>;
+  chainContracts?: string;
 }
 
 /**
