@@ -248,11 +248,18 @@ func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order, book *types.Ord
 }
 
 func (k Keeper) IncrementAccountOrdersCount(ctx sdk.Context, account sdk.AccAddress) {
-	var ordersCountBytes []byte
-	ordersCount := k.GetAccountOrdersCount(ctx, account)
-	binary.BigEndian.PutUint64(ordersCountBytes, ordersCount+1)
-
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersCountKey))
 	accountKeyBytes := []byte(account.String())
+	ordersCountBytes := store.Get(accountKeyBytes)
+	var ordersCount uint64
+
+	if ordersCountBytes == nil {
+		ordersCount = 0
+		ordersCountBytes = make([]byte, 8)
+	} else {
+		ordersCount = binary.BigEndian.Uint64(ordersCountBytes)
+	}
+
+	binary.BigEndian.PutUint64(ordersCountBytes, ordersCount+1)
 	store.Set(accountKeyBytes, ordersCountBytes)
 }

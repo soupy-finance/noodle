@@ -10,7 +10,20 @@ import (
 	"github.com/soupy-finance/noodle/x/dex/types"
 )
 
-func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := keepertest.DexKeeper(t)
+func setupMsgServer(
+	t testing.TB,
+	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
+) (types.MsgServer, context.Context) {
+	k, ctx := keepertest.DexKeeper(t, bankKeeper, stakingKeeper)
 	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
+}
+
+func setupMsgServerAndKeeper(
+	t testing.TB,
+	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
+) (keeper.Keeper, types.MsgServer, context.Context) {
+	k, ctx := keepertest.DexKeeper(t, bankKeeper, stakingKeeper)
+	return *k, keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
 }

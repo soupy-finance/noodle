@@ -69,6 +69,11 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		Flags:    flags,
 	}
 	bids, err := k.Keeper.GetVirtualBook(ctx, msg.Market, types.Bid)
+
+	if err != nil {
+		return nil, err
+	}
+
 	asks, err := k.Keeper.GetVirtualBook(ctx, msg.Market, types.Ask)
 
 	if err != nil {
@@ -186,7 +191,7 @@ func (k Keeper) ProcessLimitOrder(
 func (k Keeper) SufficientBalanceForLimitOrder(ctx sdk.Context, order *types.Order) bool {
 	var asset string
 	var quantity sdk.Dec
-	assets := strings.Split(order.Market, "/")
+	assets := strings.Split(order.Market, "-")
 
 	switch order.Side {
 	case types.Bid:
@@ -217,7 +222,7 @@ func (k Keeper) MatchUntilEmpty(
 	order *types.Order,
 	book *types.OrderBook,
 ) (execSent, execRecv sdk.Dec, sendAsset, recvAsset string) {
-	assets := strings.Split(order.Market, "/")
+	assets := strings.Split(order.Market, "-")
 	execRecv = zeroDec
 	execSent = zeroDec
 
@@ -340,7 +345,7 @@ func LimitOrderIsMatched(order *types.Order, book *types.OrderBook) bool {
 }
 
 func GetSendAndRecvAssets(order *types.Order) (sendAsset, recvAsset string) {
-	assets := strings.Split(order.Market, "/")
+	assets := strings.Split(order.Market, "-")
 
 	if order.Side == types.Ask {
 		sendAsset = assets[0]

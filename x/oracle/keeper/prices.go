@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -13,22 +14,26 @@ type PriceInfo struct {
 	val    sdk.Dec
 	weight int64
 }
+
 type ValPriceList struct {
 	prices    []PriceInfo
 	netWeight int64
 }
 
 func (p ValPriceList) Len() int { return len(p.prices) }
+
 func (p ValPriceList) Swap(i, j int) {
 	temp := p.prices[j]
 	p.prices[j] = p.prices[i]
 	p.prices[i] = temp
 }
+
 func (p ValPriceList) Less(i, j int) bool { return p.prices[i].val.LT(p.prices[j].val) }
 
 func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) string {
-	var aggPrice sdk.Dec
 	var priceList ValPriceList
+	aggPrice := sdk.ZeroDec()
+
 	k.stakingKeeper.IterateBondedValidatorsByPower(ctx, k.GetValidatorPriceFn(ctx, asset, &priceList))
 
 	// Process prices slice
@@ -53,8 +58,13 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 
 	return func(index int64, validator staking.ValidatorI) (stop bool) {
 		// Get price from store and update prices slice
-		valAssetKeyBytes := append(validator.GetOperator(), []byte(":"+asset)...)
+		valAssetKeyBytes := append([]byte(validator.GetOperator().String()), []byte(":"+asset)...)
 		priceBytes := store.Get(valAssetKeyBytes)
+
+		if priceBytes == nil {
+			return false
+		}
+
 		price, err := sdk.NewDecFromStr(string(priceBytes))
 
 		if err != nil {
@@ -62,7 +72,9 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 		}
 
 		weight := validator.GetConsensusPower(validator.GetBondedTokens())
+		fmt.Println(weight)
 		priceInfo := PriceInfo{price, weight}
+		fmt.Println(priceInfo)
 		(*priceList).prices = append((*priceList).prices, priceInfo)
 		(*priceList).netWeight += weight
 

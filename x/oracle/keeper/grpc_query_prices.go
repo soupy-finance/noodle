@@ -17,6 +17,7 @@ func (k Keeper) Prices(goCtx context.Context, req *types.QueryPricesRequest) (*t
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	prices := make([]string, len(req.Assets))
+	prices[0] = k.AggAssetPrice(ctx, req.Assets[0])
 
 	for i, asset := range req.Assets {
 		prices[i] = k.AggAssetPrice(ctx, asset)
