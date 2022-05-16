@@ -50,6 +50,7 @@ type Order struct {
 	Side     Side
 	Price    sdk.Dec
 	Quantity sdk.Dec
+	Type     OrderType
 	Flags    OrderFlags
 	IsAmm    bool
 }

@@ -66,6 +66,7 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		Side:     side,
 		Price:    price,
 		Quantity: quantity,
+		Type:     orderType,
 		Flags:    flags,
 	}
 	bids, err := k.Keeper.GetVirtualBook(ctx, msg.Market, types.Bid)
@@ -230,14 +231,20 @@ func (k Keeper) MatchUntilEmpty(
 		sendAsset = assets[0]
 		recvAsset = assets[1]
 
-		for len(book.Levels) > 0 && order.Quantity.GT(zeroDec) {
+		for len(book.Levels) > 0 &&
+			order.Quantity.GT(zeroDec) &&
+			(order.Type == types.MarketOrder || order.Price.LTE(book.BestPrice())) {
+
 			execSent, execRecv = k.MatchNextBestBid(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
 		}
 	} else {
 		sendAsset = assets[1]
 		recvAsset = assets[0]
 
-		for len(book.Levels) > 0 && order.Quantity.GT(zeroDec) {
+		for len(book.Levels) > 0 &&
+			order.Quantity.GT(zeroDec) &&
+			(order.Type == types.MarketOrder || order.Price.GTE(book.BestPrice())) {
+
 			execSent, execRecv = k.MatchNextBestAsk(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
 		}
 	}

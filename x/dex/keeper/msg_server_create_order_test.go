@@ -15,6 +15,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 	tests := []struct {
 		name          string
 		msg           types.MsgCreateOrder
+		msgs          []types.MsgCreateOrder
 		err           error
 		check         func(*testing.T, keeper.Keeper, types.MsgServer, context.Context)
 		bankKeeper    BankKeeper
@@ -52,11 +53,11 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 				side, _ := types.NewSide('b')
 				book, _ := k.GetVirtualBook(ctx, "eth-usdc", side)
 
-				require.Equal(t, len(book.Levels), 1)
-				require.Equal(t, len(book.Levels[0].Orders), 1)
+				require.Equal(t, 1, len(book.Levels))
+				require.Equal(t, 1, len(book.Levels[0].Orders))
 				require.Equal(t, "2000.000000000000000000", book.Levels[0].Orders[0].Price.String())
 				require.Equal(t, "1.000000000000000000", book.Levels[0].Orders[0].Quantity.String())
-				require.Equal(t, book.BestPrice().String(), "2000.000000000000000000")
+				require.Equal(t, "2000.000000000000000000", book.BestPrice().String())
 			},
 			bankKeeper: BankKeeper{
 				_getBalance: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
@@ -82,12 +83,139 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "limit match 1 eth at 2000",
+			msgs: []types.MsgCreateOrder{
+				{
+					Creator:   sample.AccAddress(),
+					Market:    "eth-usdc",
+					Side:      false,
+					OrderType: "limit",
+					Price:     "2000",
+					Quantity:  "1",
+				},
+				{
+					Creator:   sample.AccAddress(),
+					Market:    "eth-usdc",
+					Side:      true,
+					OrderType: "limit",
+					Price:     "2000",
+					Quantity:  "1",
+				},
+			},
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context) {
+				ctx := sdk.UnwrapSDKContext(goCtx)
+				side, _ := types.NewSide('b')
+				book, _ := k.GetVirtualBook(ctx, "eth-usdc", side)
+
+				require.Equal(t, 0, len(book.Levels))
+			},
+			bankKeeper: BankKeeper{
+				_getBalance: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+					var quantityDec sdk.Dec
+
+					switch denom {
+					case "usdc":
+						quantityDec, _ = sdk.NewDecFromStr("2000")
+					case "eth":
+						quantityDec, _ = sdk.NewDecFromStr("1")
+					default:
+						quantityDec = sdk.ZeroDec()
+					}
+
+					return sdk.NewCoin(denom, sdk.NewIntFromBigInt(quantityDec.BigInt()))
+				},
+				_sendCoins: func(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+					return nil
+				},
+				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+					return nil
+				},
+				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "limit don't match 1 eth at 2000",
+			msgs: []types.MsgCreateOrder{
+				{
+					Creator:   sample.AccAddress(),
+					Market:    "eth-usdc",
+					Side:      false,
+					OrderType: "limit",
+					Price:     "2000",
+					Quantity:  "1",
+				},
+				{
+					Creator:   sample.AccAddress(),
+					Market:    "eth-usdc",
+					Side:      true,
+					OrderType: "limit",
+					Price:     "2001",
+					Quantity:  "1",
+				},
+			},
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context) {
+				ctx := sdk.UnwrapSDKContext(goCtx)
+				bidSide, _ := types.NewSide('b')
+				askSide, _ := types.NewSide('a')
+				bidBook, _ := k.GetVirtualBook(ctx, "eth-usdc", bidSide)
+				askBook, _ := k.GetVirtualBook(ctx, "eth-usdc", askSide)
+
+				require.Equal(t, 1, len(bidBook.Levels))
+				require.Equal(t, 1, len(bidBook.Levels[0].Orders))
+				require.Equal(t, "2000.000000000000000000", bidBook.Levels[0].Orders[0].Price.String())
+				require.Equal(t, "1.000000000000000000", bidBook.Levels[0].Orders[0].Quantity.String())
+				require.Equal(t, "2000.000000000000000000", bidBook.BestPrice().String())
+
+				require.Equal(t, 1, len(askBook.Levels))
+				require.Equal(t, 1, len(askBook.Levels[0].Orders))
+				require.Equal(t, "2001.000000000000000000", askBook.Levels[0].Orders[0].Price.String())
+				require.Equal(t, "1.000000000000000000", askBook.Levels[0].Orders[0].Quantity.String())
+				require.Equal(t, "2001.000000000000000000", askBook.BestPrice().String())
+			},
+			bankKeeper: BankKeeper{
+				_getBalance: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+					var quantityDec sdk.Dec
+
+					switch denom {
+					case "usdc":
+						quantityDec, _ = sdk.NewDecFromStr("2000")
+					case "eth":
+						quantityDec, _ = sdk.NewDecFromStr("1")
+					default:
+						quantityDec = sdk.ZeroDec()
+					}
+
+					return sdk.NewCoin(denom, sdk.NewIntFromBigInt(quantityDec.BigInt()))
+				},
+				_sendCoins: func(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+					return nil
+				},
+				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+					return nil
+				},
+				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+					return nil
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			k, msgServer, ctx := setupMsgServerAndKeeper(t, tt.bankKeeper, tt.stakingKeeper)
-			res, err := msgServer.CreateOrder(ctx, &tt.msg)
+			var res *types.MsgCreateOrderResponse
+			var err error
+
+			if len(tt.msgs) == 0 {
+				res, err = msgServer.CreateOrder(ctx, &tt.msg)
+			} else {
+				for _, msg := range tt.msgs {
+					res, err = msgServer.CreateOrder(ctx, &msg)
+				}
+			}
 
 			_ = res
 			require.Equal(t, tt.err, err)
