@@ -9,11 +9,14 @@ const TypeMsgObserveDeposit = "observe_deposit"
 
 var _ sdk.Msg = &MsgObserveDeposit{}
 
-func NewMsgObserveDeposit(creator string, chainId string, depositor string) *MsgObserveDeposit {
+func NewMsgObserveDeposit(creator string, chainId string, depositor string, depositId string, quantity string, asset string) *MsgObserveDeposit {
 	return &MsgObserveDeposit{
 		Creator:   creator,
 		ChainId:   chainId,
 		Depositor: depositor,
+		DepositId: depositId,
+		Quantity:  quantity,
+		Asset:     asset,
 	}
 }
 

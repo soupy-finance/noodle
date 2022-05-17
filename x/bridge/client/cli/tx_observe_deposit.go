@@ -16,10 +16,13 @@ func CmdObserveDeposit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "observe-deposit [chain-id] [depositor]",
 		Short: "Broadcast message observeDeposit",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
 			argDepositor := args[1]
+			argDepositId := args[2]
+			argQuantity := args[3]
+			argAsset := args[4]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -30,6 +33,9 @@ func CmdObserveDeposit() *cobra.Command {
 				clientCtx.GetFromAddress().String(),
 				argChainId,
 				argDepositor,
+				argDepositId,
+				argQuantity,
+				argAsset,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

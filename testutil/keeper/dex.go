@@ -42,10 +42,10 @@ func DexKeeper(t testing.TB, keepers ...interface{}) (*keeper.Keeper, sdk.Contex
 
 	if len(keepers) > 0 {
 		bankKeeper = keepers[0].(types.BankKeeper)
+	}
 
-		if len(keepers) > 1 {
-			stakingKeeper = keepers[1].(types.StakingKeeper)
-		}
+	if len(keepers) > 1 {
+		stakingKeeper = keepers[1].(types.StakingKeeper)
 	}
 
 	k := keeper.NewKeeper(

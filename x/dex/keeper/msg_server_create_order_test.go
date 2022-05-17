@@ -17,7 +17,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 		msg           types.MsgCreateOrder
 		msgs          []types.MsgCreateOrder
 		err           error
-		check         func(*testing.T, keeper.Keeper, types.MsgServer, context.Context)
+		check         func(*testing.T, keeper.Keeper, types.MsgServer, context.Context, *types.MsgCreateOrder, *types.MsgCreateOrderResponse)
 		bankKeeper    BankKeeper
 		stakingKeeper StakingKeeper
 	}{
@@ -48,7 +48,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 				Price:     "2000",
 				Quantity:  "1",
 			},
-			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context) {
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
 				side, _ := types.NewSide('b')
 				book, _ := k.GetVirtualBook(ctx, "eth-usdc", side)
@@ -103,7 +103,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 					Quantity:  "1",
 				},
 			},
-			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context) {
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
 				side, _ := types.NewSide('b')
 				book, _ := k.GetVirtualBook(ctx, "eth-usdc", side)
@@ -156,7 +156,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 					Quantity:  "1",
 				},
 			},
-			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context) {
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
 				bidSide, _ := types.NewSide('b')
 				askSide, _ := types.NewSide('a')
@@ -205,7 +205,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k, msgServer, ctx := setupMsgServerAndKeeper(t, tt.bankKeeper, tt.stakingKeeper)
+			k, msgServer, ctx := setupMsgServer(t, tt.bankKeeper, tt.stakingKeeper)
 			var res *types.MsgCreateOrderResponse
 			var err error
 
@@ -221,7 +221,11 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 			require.Equal(t, tt.err, err)
 
 			if tt.check != nil {
-				tt.check(t, k, msgServer, ctx)
+				if len(tt.msgs) == 0 {
+					tt.check(t, k, msgServer, ctx, &tt.msg, res)
+				} else {
+					tt.check(t, k, msgServer, ctx, &tt.msgs[0], res)
+				}
 			}
 		})
 	}

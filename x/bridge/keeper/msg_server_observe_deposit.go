@@ -2,9 +2,7 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/soupy-finance/noodle/x/bridge/types"
 )
@@ -26,28 +24,28 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 	}
 
 	depositor := k.ExternalAddressToDexAddress(ctx, msg.Depositor)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.DepositsKey))
-	depositorKeyBytes := []byte(msg.DepositId + ":" + msg.ChainId + ":" + depositor + ":" + msg.Quantity + ":" + msg.Asset)
-	observationsBytes := store.Get(depositorKeyBytes)
-	var observations []string
+	depositKeyBytes := GetDepositKeyBytes(depositor, msg)
+	observations, err := k.GetDepositObservations(ctx, depositKeyBytes, msg)
 
-	if observationsBytes != nil {
-		err := json.Unmarshal(observationsBytes, &observations)
-
-		if err != nil {
-			panic(err)
-		}
+	if err != nil {
+		panic(err)
 	}
 
 	observations = append(observations, msg.Creator)
 	lastTotalPower := k.stakingKeeper.GetLastTotalPower(ctx)
 	halfLastTotalPower := lastTotalPower.Quo(sdk.NewInt(2))
-	var totalPower sdk.Int
+	totalPower := sdk.ZeroInt()
+	validatorsObserved := make(map[string]bool, len(observations))
 
 	for _, validatorAddr := range observations {
+		if validatorsObserved[validatorAddr] {
+			return nil, types.DupObservation
+		}
+
 		val, found := k.stakingKeeper.GetValidator(ctx, sdk.ValAddress(validatorAddr))
 
 		if found {
+			validatorsObserved[validatorAddr] = true
 			consensusPower := val.GetConsensusPower(val.GetBondedTokens())
 			totalPower = totalPower.Add(sdk.NewInt(consensusPower))
 		}
@@ -55,7 +53,7 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 
 	if totalPower.GT(halfLastTotalPower) {
 		// Remove observations
-		store.Delete(depositorKeyBytes)
+		k.DeleteDepositObservations(ctx, depositKeyBytes, msg)
 
 		// Grant user tokens on exchange
 		quantity, err := sdk.NewDecFromStr(msg.Quantity)
@@ -76,19 +74,13 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		if err != nil {
 			panic(err)
 		}
+	} else {
+		err := k.SetDepositObservations(ctx, depositKeyBytes, msg, observations)
+
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return &types.MsgObserveDepositResponse{}, nil
-}
-
-func (k Keeper) ExternalAddressToDexAddress(ctx sdk.Context, address string) string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountLinksKey))
-	addressKeyBytes := []byte(address)
-	dexAddressBytes := store.Get(addressKeyBytes)
-
-	if dexAddressBytes == nil {
-		return address
-	}
-
-	return string(dexAddressBytes)
 }
