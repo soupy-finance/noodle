@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/soupy-finance/noodle/x/dex/types"
 )
 
@@ -13,7 +14,13 @@ var zeroDec sdk.Dec = sdk.ZeroDec()
 func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder) (*types.MsgCreateOrderResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Validate arguments
+	// Validate inputs
+	account, err := sdk.AccAddressFromBech32(msg.Creator)
+
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+
 	var side types.Side
 
 	if !msg.Side {
@@ -54,7 +61,6 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 	}
 
 	// Create order id from account address and historical order count
-	account := sdk.AccAddress(msg.Creator)
 	accountOrdersCount := k.GetAccountOrdersCount(ctx, account)
 	orderId := types.NewOrderId(account, accountOrdersCount)
 

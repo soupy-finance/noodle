@@ -5,13 +5,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/soupy-finance/noodle/x/bridge/types"
 )
 
 func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*types.MsgWithdrawResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check inputs
+	// Parse inputs
 	chain_contracts := k.ChainContractsParsed(ctx)
 	_, ok := chain_contracts[msg.ChainId]
 
@@ -22,12 +23,18 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 	quantity, err := sdk.NewDecFromStr(msg.Quantity)
 
 	if err != nil {
-		return nil, err
+		return nil, types.InvalidQuantity
+	}
+
+	dexAddr, err := sdk.AccAddressFromBech32(msg.Creator)
+
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
 	// Send coins to module and burn
 	coins := sdk.NewCoins(sdk.NewCoin(msg.Asset, sdk.NewIntFromBigInt(quantity.BigInt())))
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sdk.AccAddress(msg.Creator), types.ModuleName, coins)
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, dexAddr, types.ModuleName, coins)
 
 	if err != nil {
 		return nil, err
@@ -41,8 +48,7 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 
 	// Get withdrawal count
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.WithdrawalCountsKey))
-	withdrawalCountKeyBytes := []byte(msg.Creator)
-	withdrawalIdBytes := store.Get(withdrawalCountKeyBytes)
+	withdrawalIdBytes := store.Get(dexAddr)
 
 	if withdrawalIdBytes == nil {
 		withdrawalIdBytes = []byte("0")
@@ -55,12 +61,12 @@ func (k msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*typ
 	}
 
 	// Alert validators they need to sign
-	EmitWithdrawEvent(ctx, msg.Creator, withdrawalId.String(), msg.Asset, msg.Quantity, msg.ChainId)
+	EmitWithdrawEvent(ctx, withdrawalId.String(), msg.Asset, msg.Quantity, msg.Address, msg.ChainId)
 	// The withdrawal chain needs to store the withdrawal id once executed to prevent duplication
 
 	// Increment and store withdrawal id
 	withdrawalId.Add(sdk.NewInt(1))
-	store.Set(withdrawalCountKeyBytes, []byte(withdrawalId.String()))
+	store.Set(dexAddr, []byte(withdrawalId.String()))
 
 	return &types.MsgWithdrawResponse{}, nil
 }

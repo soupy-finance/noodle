@@ -409,7 +409,6 @@ func New(
 		keys[bridgemoduletypes.MemStoreKey],
 		app.GetSubspace(bridgemoduletypes.ModuleName),
 
-		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
 	)

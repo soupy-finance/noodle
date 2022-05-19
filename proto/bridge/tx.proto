@@ -28,7 +28,8 @@ message MsgWithdraw {
   string creator = 1;
   string asset = 2;
   string quantity = 3;
-  string chainId = 4;
+  string address = 4;
+  string chainId = 5;
 }
 
 message MsgWithdrawResponse {

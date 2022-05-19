@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgWithdraw = "withdraw"
@@ -40,9 +39,9 @@ func (msg *MsgWithdraw) GetSignBytes() []byte {
 }
 
 func (msg *MsgWithdraw) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	_, err := sdk.AccAddressFromHex(msg.Address)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return InvalidChainAddress
 	}
 	return nil
 }

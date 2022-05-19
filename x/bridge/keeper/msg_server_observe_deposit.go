@@ -4,13 +4,22 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/soupy-finance/noodle/x/bridge/types"
 )
 
 func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDeposit) (*types.MsgObserveDepositResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	val, found := k.stakingKeeper.GetValidator(ctx, sdk.ValAddress(msg.Creator))
+	// Parse inputs
+	account, err := sdk.AccAddressFromBech32(msg.Creator)
+
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+
+	valAddr := sdk.ValAddress(account)
+	val, found := k.stakingKeeper.GetValidator(ctx, valAddr)
 
 	if !found || !val.IsBonded() {
 		return nil, types.NotValidator
@@ -31,21 +40,27 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		panic(err)
 	}
 
-	observations = append(observations, msg.Creator)
+	observations = append(observations, valAddr.String())
 	lastTotalPower := k.stakingKeeper.GetLastTotalPower(ctx)
 	halfLastTotalPower := lastTotalPower.Quo(sdk.NewInt(2))
 	totalPower := sdk.ZeroInt()
 	validatorsObserved := make(map[string]bool, len(observations))
 
-	for _, validatorAddr := range observations {
-		if validatorsObserved[validatorAddr] {
+	for _, valAddrStr := range observations {
+		if validatorsObserved[valAddrStr] {
 			return nil, types.DupObservation
 		}
 
-		val, found := k.stakingKeeper.GetValidator(ctx, sdk.ValAddress(validatorAddr))
+		valAddr, err := sdk.ValAddressFromBech32(valAddrStr)
+
+		if err != nil {
+			panic(err)
+		}
+
+		val, found := k.stakingKeeper.GetValidator(ctx, sdk.ValAddress(valAddr))
 
 		if found {
-			validatorsObserved[validatorAddr] = true
+			validatorsObserved[valAddrStr] = true
 			consensusPower := val.GetConsensusPower(val.GetBondedTokens())
 			totalPower = totalPower.Add(sdk.NewInt(consensusPower))
 		}
@@ -69,7 +84,13 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 			panic(err)
 		}
 
-		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sdk.AccAddress(depositor), coins)
+		depositorAddr, err := sdk.AccAddressFromBech32(depositor)
+
+		if err != nil {
+			panic(err)
+		}
+
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, depositorAddr, coins)
 
 		if err != nil {
 			panic(err)

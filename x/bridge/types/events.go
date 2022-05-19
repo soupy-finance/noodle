@@ -7,20 +7,20 @@ import (
 var (
 	EventTypeWithdraw = "withdraw"
 
-	AttributeKeyAccount  = "account"
 	AttributeKeyWId      = "withdrawal_id"
 	AttributeKeyAsset    = "asset"
 	AttributeKeyQuantity = "quantity"
+	AttributeKeyAddress  = "address"
 	AttributeKeyChainId  = "chain_id"
 )
 
-func NewWithdrawEvent(account string, wId string, asset string, quantity string, chainId string) sdk.Event {
+func NewWithdrawEvent(wId string, asset string, quantity string, address string, chainId string) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeWithdraw,
-		sdk.NewAttribute(AttributeKeyAccount, account),
 		sdk.NewAttribute(AttributeKeyWId, wId),
 		sdk.NewAttribute(AttributeKeyAsset, asset),
 		sdk.NewAttribute(AttributeKeyQuantity, quantity),
+		sdk.NewAttribute(AttributeKeyAddress, address),
 		sdk.NewAttribute(AttributeKeyChainId, chainId),
 	)
 }

@@ -10,6 +10,8 @@ import (
 var (
 	NotValidator          = sdkerrors.Register(ModuleName, 1100, "not a validator")
 	InvalidChain          = sdkerrors.Register(ModuleName, 1101, "invalid chain")
-	DupObservation        = sdkerrors.Register(ModuleName, 1102, "duplicate observation")
-	InvalidDepositAddress = sdkerrors.Register(ModuleName, 1103, "invalid deposit address")
+	InvalidQuantity       = sdkerrors.Register(ModuleName, 1102, "invalid quantity")
+	InvalidChainAddress   = sdkerrors.Register(ModuleName, 1103, "invalid chain address")
+	DupObservation        = sdkerrors.Register(ModuleName, 1104, "duplicate observation")
+	InvalidDepositAddress = sdkerrors.Register(ModuleName, 1105, "invalid deposit address")
 )

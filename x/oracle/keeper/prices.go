@@ -58,7 +58,7 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 
 	return func(index int64, validator staking.ValidatorI) (stop bool) {
 		// Get price from store and update prices slice
-		valAssetKeyBytes := append([]byte(validator.GetOperator().String()), []byte(":"+asset)...)
+		valAssetKeyBytes := append(validator.GetOperator(), []byte(asset)...)
 		priceBytes := store.Get(valAssetKeyBytes)
 
 		if priceBytes == nil {
