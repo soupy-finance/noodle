@@ -17,7 +17,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func OracleKeeper(t testing.TB, keepers ...interface{}) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -36,13 +36,25 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"OracleParams",
 	)
+
+	var bankKeeper types.BankKeeper
+	var stakingKeeper types.StakingKeeper
+
+	if len(keepers) > 0 {
+		bankKeeper = keepers[0].(types.BankKeeper)
+	}
+
+	if len(keepers) > 1 {
+		stakingKeeper = keepers[1].(types.StakingKeeper)
+	}
+
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
-		nil,
-		nil,
+		bankKeeper,
+		stakingKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

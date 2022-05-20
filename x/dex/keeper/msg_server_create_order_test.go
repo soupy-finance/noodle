@@ -232,11 +232,11 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 }
 
 type BankKeeper struct {
-	_spendableCoins               func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	_getBalance                   func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	_sendCoins                    func(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	_sendCoinsFromModuleToAccount func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	_sendCoinsFromAccountToModule func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	_spendableCoins               func(sdk.Context, sdk.AccAddress) sdk.Coins
+	_getBalance                   func(sdk.Context, sdk.AccAddress, string) sdk.Coin
+	_sendCoins                    func(sdk.Context, sdk.AccAddress, sdk.AccAddress, sdk.Coins) error
+	_sendCoinsFromModuleToAccount func(sdk.Context, string, sdk.AccAddress, sdk.Coins) error
+	_sendCoinsFromAccountToModule func(sdk.Context, sdk.AccAddress, string, sdk.Coins) error
 }
 
 func (k BankKeeper) SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
