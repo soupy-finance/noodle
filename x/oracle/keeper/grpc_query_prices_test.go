@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/soupy-finance/noodle/testutil/sample"
 	"github.com/soupy-finance/noodle/x/oracle/keeper"
 	"github.com/soupy-finance/noodle/x/oracle/types"
 	"github.com/stretchr/testify/require"
@@ -27,15 +28,14 @@ func TestPricesQuery(t *testing.T) {
 				Assets: []string{"eth"},
 			},
 			check: func(t *testing.T, k keeper.Keeper, ctx context.Context, req *types.QueryPricesRequest, res *types.QueryPricesResponse) {
-				require.Equal(t, "[\"0\"]", res.Data)
+				require.Equal(t, "[\"0.000000000000000000\"]", res.Data)
 			},
 			bankKeeper: BankKeeper{},
 			stakingKeeper: StakingKeeper{
-				_getValidator: func(ctx sdk.Context, val sdk.ValAddress) (staking.Validator, bool) {
-
-				},
 				_iterateBondedValidatorsByPower: func(ctx sdk.Context, fn func(index int64, val staking.ValidatorI) bool) {
-
+					account := sample.AccAddress()
+					valAddr, _ := sdk.ValAddressFromBech32(account)
+					fn(0, staking.Validator{OperatorAddress: sdk.MustBech32ifyAddressBytes("cosmosvaloper", valAddr)})
 				},
 			},
 		},
