@@ -45,7 +45,7 @@ func (k Keeper) DeleteDepositObservations(ctx sdk.Context, depositKeyBytes []byt
 	store.Delete(depositKeyBytes)
 }
 
-func (k Keeper) ExternalAddressToDexAddress(ctx sdk.Context, address string) string {
+func (k Keeper) DelegateAddressToDexAddress(ctx sdk.Context, address string) string {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountLinksKey))
 	addressKeyBytes := []byte(address)
 	dexAddressBytes := store.Get(addressKeyBytes)
@@ -58,5 +58,5 @@ func (k Keeper) ExternalAddressToDexAddress(ctx sdk.Context, address string) str
 }
 
 func GetDepositKeyBytes(depositor string, msg *types.MsgObserveDeposit) []byte {
-	return []byte(msg.DepositId + ":" + msg.ChainId + ":" + depositor + ":" + msg.Quantity + ":" + msg.Asset)
+	return []byte(depositor + ":" + msg.DepositId + ":" + msg.ChainId + ":" + msg.Quantity + ":" + msg.Asset)
 }

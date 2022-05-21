@@ -18,6 +18,7 @@ export interface MsgWithdraw {
   creator: string;
   asset: string;
   quantity: string;
+  address: string;
   chainId: string;
 }
 
@@ -226,6 +227,7 @@ const baseMsgWithdraw: object = {
   creator: "",
   asset: "",
   quantity: "",
+  address: "",
   chainId: "",
 };
 
@@ -240,8 +242,11 @@ export const MsgWithdraw = {
     if (message.quantity !== "") {
       writer.uint32(26).string(message.quantity);
     }
+    if (message.address !== "") {
+      writer.uint32(34).string(message.address);
+    }
     if (message.chainId !== "") {
-      writer.uint32(34).string(message.chainId);
+      writer.uint32(42).string(message.chainId);
     }
     return writer;
   },
@@ -263,6 +268,9 @@ export const MsgWithdraw = {
           message.quantity = reader.string();
           break;
         case 4:
+          message.address = reader.string();
+          break;
+        case 5:
           message.chainId = reader.string();
           break;
         default:
@@ -290,6 +298,11 @@ export const MsgWithdraw = {
     } else {
       message.quantity = "";
     }
+    if (object.address !== undefined && object.address !== null) {
+      message.address = String(object.address);
+    } else {
+      message.address = "";
+    }
     if (object.chainId !== undefined && object.chainId !== null) {
       message.chainId = String(object.chainId);
     } else {
@@ -303,6 +316,7 @@ export const MsgWithdraw = {
     message.creator !== undefined && (obj.creator = message.creator);
     message.asset !== undefined && (obj.asset = message.asset);
     message.quantity !== undefined && (obj.quantity = message.quantity);
+    message.address !== undefined && (obj.address = message.address);
     message.chainId !== undefined && (obj.chainId = message.chainId);
     return obj;
   },
@@ -323,6 +337,11 @@ export const MsgWithdraw = {
       message.quantity = object.quantity;
     } else {
       message.quantity = "";
+    }
+    if (object.address !== undefined && object.address !== null) {
+      message.address = object.address;
+    } else {
+      message.address = "";
     }
     if (object.chainId !== undefined && object.chainId !== null) {
       message.chainId = object.chainId;

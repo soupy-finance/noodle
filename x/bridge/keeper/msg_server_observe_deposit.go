@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -32,7 +33,13 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		return nil, types.InvalidChain
 	}
 
-	depositor := k.ExternalAddressToDexAddress(ctx, msg.Depositor)
+	depositor := k.DelegateAddressToDexAddress(ctx, msg.Depositor)
+	depositorAddr, err := sdk.AccAddressFromBech32(depositor)
+
+	if err != nil {
+		return nil, types.InvalidDepositAddress
+	}
+
 	depositKeyBytes := GetDepositKeyBytes(depositor, msg)
 	observations, err := k.GetDepositObservations(ctx, depositKeyBytes, msg)
 
@@ -40,6 +47,7 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		panic(err)
 	}
 
+	// Check if sufficient observation power reached
 	observations = append(observations, valAddr.String())
 	lastTotalPower := k.stakingKeeper.GetLastTotalPower(ctx)
 	halfLastTotalPower := lastTotalPower.Quo(sdk.NewInt(2))
@@ -61,10 +69,13 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 
 		if found {
 			validatorsObserved[valAddrStr] = true
-			consensusPower := val.GetConsensusPower(val.GetBondedTokens())
+			consensusPower := val.GetConsensusPower(k.stakingKeeper.PowerReduction(ctx))
 			totalPower = totalPower.Add(sdk.NewInt(consensusPower))
 		}
 	}
+
+	fmt.Println(totalPower)
+	fmt.Println(halfLastTotalPower)
 
 	if totalPower.GT(halfLastTotalPower) {
 		// Remove observations
@@ -79,12 +90,6 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 
 		coins := sdk.NewCoins(sdk.NewCoin(msg.Asset, sdk.NewIntFromBigInt(quantity.BigInt())))
 		err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
-
-		if err != nil {
-			panic(err)
-		}
-
-		depositorAddr, err := sdk.AccAddressFromBech32(depositor)
 
 		if err != nil {
 			panic(err)

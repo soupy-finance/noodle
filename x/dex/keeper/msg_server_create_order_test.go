@@ -231,6 +231,63 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 	}
 }
 
+func TestMsgCreateOrderMsg_MarketBuy(t *testing.T) {
+	tests := []struct {
+		name          string
+		msg           types.MsgCreateOrder
+		msgs          []types.MsgCreateOrder
+		err           error
+		check         func(*testing.T, keeper.Keeper, types.MsgServer, context.Context, *types.MsgCreateOrder, *types.MsgCreateOrderResponse)
+		bankKeeper    BankKeeper
+		stakingKeeper StakingKeeper
+	}{
+		{
+			name: "market buy 1 eth at 2000 insufficient liquidity",
+			msg: types.MsgCreateOrder{
+				Creator:   sample.AccAddress(),
+				Market:    "eth-usdc",
+				Side:      false,
+				OrderType: "market",
+				Price:     "2000",
+				Quantity:  "1",
+			},
+			bankKeeper: BankKeeper{
+				_getBalance: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+					return sdk.NewCoin(denom, sdk.ZeroInt())
+				},
+			},
+			err: types.InsufficientLiquidity,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k, msgServer, ctx := setupMsgServer(t, tt.bankKeeper, tt.stakingKeeper)
+			var res *types.MsgCreateOrderResponse
+			var err error
+
+			if len(tt.msgs) == 0 {
+				res, err = msgServer.CreateOrder(ctx, &tt.msg)
+			} else {
+				for _, msg := range tt.msgs {
+					res, err = msgServer.CreateOrder(ctx, &msg)
+				}
+			}
+
+			_ = res
+			require.Equal(t, tt.err, err)
+
+			if tt.check != nil {
+				if len(tt.msgs) == 0 {
+					tt.check(t, k, msgServer, ctx, &tt.msg, res)
+				} else {
+					tt.check(t, k, msgServer, ctx, &tt.msgs[0], res)
+				}
+			}
+		})
+	}
+}
+
 type BankKeeper struct {
 	_spendableCoins               func(sdk.Context, sdk.AccAddress) sdk.Coins
 	_getBalance                   func(sdk.Context, sdk.AccAddress, string) sdk.Coin

@@ -63,6 +63,40 @@ func TestMsgObserveDeposit(t *testing.T) {
 			},
 		},
 		{
+			name: "observe deposit invalid deposit address",
+			msg: types.MsgObserveDeposit{
+				Creator:   observer1,
+				ChainId:   "ethereum",
+				Depositor: "bad address",
+				DepositId: "1",
+				Quantity:  "1",
+				Asset:     "eth",
+			},
+			err: types.InvalidDepositAddress,
+			stakingKeeper: StakingKeeper{
+				_getValidator: func(ctx sdk.Context, address sdk.ValAddress) (validator staking.Validator, found bool) {
+					return staking.Validator{Status: 3}, true
+				},
+			},
+		},
+		{
+			name: "observe deposit invalid chain",
+			msg: types.MsgObserveDeposit{
+				Creator:   observer1,
+				ChainId:   "fake chain",
+				Depositor: depositorExtAddr,
+				DepositId: "1",
+				Quantity:  "1",
+				Asset:     "eth",
+			},
+			err: types.InvalidChain,
+			stakingKeeper: StakingKeeper{
+				_getValidator: func(ctx sdk.Context, address sdk.ValAddress) (validator staking.Validator, found bool) {
+					return staking.Validator{Status: 3}, true
+				},
+			},
+		},
+		{
 			name: "observe deposit partial",
 			msg: types.MsgObserveDeposit{
 				Creator:   observer1,
@@ -74,7 +108,7 @@ func TestMsgObserveDeposit(t *testing.T) {
 			},
 			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgObserveDeposit, res *types.MsgObserveDepositResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
-				depositor := k.ExternalAddressToDexAddress(ctx, msg.Depositor)
+				depositor := k.DelegateAddressToDexAddress(ctx, msg.Depositor)
 				depositKeyBytes := keeper.GetDepositKeyBytes(depositor, msg)
 				observations, err := k.GetDepositObservations(ctx, depositKeyBytes, msg)
 
@@ -90,6 +124,9 @@ func TestMsgObserveDeposit(t *testing.T) {
 				},
 				_getLastTotalPower: func(ctx sdk.Context) sdk.Int {
 					return sdk.NewIntFromUint64(2)
+				},
+				_powerReduction: func(ctx sdk.Context) sdk.Int {
+					return sdk.NewIntFromUint64(1000000)
 				},
 			},
 		},
@@ -115,7 +152,7 @@ func TestMsgObserveDeposit(t *testing.T) {
 			},
 			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgObserveDeposit, res *types.MsgObserveDepositResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
-				depositor := k.ExternalAddressToDexAddress(ctx, msg.Depositor)
+				depositor := k.DelegateAddressToDexAddress(ctx, msg.Depositor)
 				depositKeyBytes := keeper.GetDepositKeyBytes(depositor, msg)
 				observations, err := k.GetDepositObservations(ctx, depositKeyBytes, msg)
 
@@ -131,6 +168,9 @@ func TestMsgObserveDeposit(t *testing.T) {
 				},
 				_getLastTotalPower: func(ctx sdk.Context) sdk.Int {
 					return sdk.NewIntFromUint64(2)
+				},
+				_powerReduction: func(ctx sdk.Context) sdk.Int {
+					return sdk.NewIntFromUint64(1000000)
 				},
 			},
 			bankKeeper: BankKeeper{
@@ -168,7 +208,7 @@ func TestMsgObserveDeposit(t *testing.T) {
 			err: types.DupObservation,
 			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgObserveDeposit, res *types.MsgObserveDepositResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
-				depositor := k.ExternalAddressToDexAddress(ctx, msg.Depositor)
+				depositor := k.DelegateAddressToDexAddress(ctx, msg.Depositor)
 				depositKeyBytes := keeper.GetDepositKeyBytes(depositor, msg)
 				observations, err := k.GetDepositObservations(ctx, depositKeyBytes, msg)
 
@@ -184,6 +224,9 @@ func TestMsgObserveDeposit(t *testing.T) {
 				},
 				_getLastTotalPower: func(ctx sdk.Context) sdk.Int {
 					return sdk.NewIntFromUint64(2)
+				},
+				_powerReduction: func(ctx sdk.Context) sdk.Int {
+					return sdk.NewIntFromUint64(1000000)
 				},
 			},
 			bankKeeper: BankKeeper{
@@ -263,6 +306,7 @@ func (k BankKeeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk
 type StakingKeeper struct {
 	_getValidator      func(sdk.Context, sdk.ValAddress) (staking.Validator, bool)
 	_getLastTotalPower func(sdk.Context) sdk.Int
+	_powerReduction    func(sdk.Context) sdk.Int
 }
 
 func (k StakingKeeper) GetValidator(ctx sdk.Context, address sdk.ValAddress) (validator staking.Validator, found bool) {
@@ -270,4 +314,7 @@ func (k StakingKeeper) GetValidator(ctx sdk.Context, address sdk.ValAddress) (va
 }
 func (k StakingKeeper) GetLastTotalPower(ctx sdk.Context) sdk.Int {
 	return k._getLastTotalPower(ctx)
+}
+func (k StakingKeeper) PowerReduction(ctx sdk.Context) sdk.Int {
+	return k._powerReduction(ctx)
 }
