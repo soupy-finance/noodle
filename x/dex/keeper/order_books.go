@@ -49,13 +49,20 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 		level.Orders = make([]types.Order, len(storedLevel.Orders), len(storedLevel.Orders)+1)
 
 		for j, storedOrder := range storedLevel.Orders {
+			accAddress, err := sdk.AccAddressFromBech32(storedOrder.Account)
+
+			if err != nil {
+				panic(err)
+			}
+
 			order := &level.Orders[j]
 			*order = types.Order{
-				Account: sdk.AccAddress(storedOrder.Account),
+				Account: accAddress,
 				Market:  market,
 				Side:    side,
 				Price:   level.Price,
 			}
+
 			quantity, err := sdk.NewDecFromStr(storedOrder.Quantity)
 
 			if err != nil {

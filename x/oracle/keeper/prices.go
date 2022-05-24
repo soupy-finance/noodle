@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -72,9 +71,7 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 		}
 
 		weight := validator.GetConsensusPower(validator.GetBondedTokens())
-		fmt.Println(weight)
 		priceInfo := PriceInfo{price, weight}
-		fmt.Println(priceInfo)
 		(*priceList).prices = append((*priceList).prices, priceInfo)
 		(*priceList).netWeight += weight
 

@@ -174,13 +174,13 @@ func TestMsgObserveDeposit(t *testing.T) {
 				},
 			},
 			bankKeeper: BankKeeper{
-				_mintCoins: func(ctx sdk.Context, asset string, amt sdk.Coins) error {
+				_mintCoins: func(ctx sdk.Context, asset string, amts sdk.Coins) error {
 					return nil
 				},
-				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amts sdk.Coins) error {
 					return nil
 				},
-				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amts sdk.Coins) error {
 					return nil
 				},
 			},
@@ -230,13 +230,13 @@ func TestMsgObserveDeposit(t *testing.T) {
 				},
 			},
 			bankKeeper: BankKeeper{
-				_mintCoins: func(ctx sdk.Context, asset string, amt sdk.Coins) error {
+				_mintCoins: func(ctx sdk.Context, asset string, amts sdk.Coins) error {
 					return nil
 				},
-				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amts sdk.Coins) error {
 					return nil
 				},
-				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amts sdk.Coins) error {
 					return nil
 				},
 			},
@@ -290,17 +290,17 @@ type BankKeeper struct {
 func (k BankKeeper) SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
 	return k._spendableCoins(ctx, addr)
 }
-func (k BankKeeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
-	return k._mintCoins(ctx, moduleName, amt)
+func (k BankKeeper) MintCoins(ctx sdk.Context, moduleName string, amts sdk.Coins) error {
+	return k._mintCoins(ctx, moduleName, amts)
 }
-func (k BankKeeper) BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
-	return k._burnCoins(ctx, moduleName, amt)
+func (k BankKeeper) BurnCoins(ctx sdk.Context, moduleName string, amts sdk.Coins) error {
+	return k._burnCoins(ctx, moduleName, amts)
 }
-func (k BankKeeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
-	return k._sendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, amt)
+func (k BankKeeper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amts sdk.Coins) error {
+	return k._sendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, amts)
 }
-func (k BankKeeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
-	return k._sendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
+func (k BankKeeper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amts sdk.Coins) error {
+	return k._sendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amts)
 }
 
 type StakingKeeper struct {

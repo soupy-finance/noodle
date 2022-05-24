@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -73,9 +72,6 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 			totalPower = totalPower.Add(sdk.NewInt(consensusPower))
 		}
 	}
-
-	fmt.Println(totalPower)
-	fmt.Println(halfLastTotalPower)
 
 	if totalPower.GT(halfLastTotalPower) {
 		// Remove observations

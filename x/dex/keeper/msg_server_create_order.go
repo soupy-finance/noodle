@@ -130,9 +130,9 @@ func (k Keeper) ProcessMarketOrder(
 	}
 
 	// Match orders
-	execSent, execRecv, sendAsset, recvAsset := k.MatchUntilEmpty(ctx, order, book)
+	execSent, execRecv, sendAsset, recvAsset, remaining := k.MatchUntilEmpty(ctx, order, book)
 
-	if order.Quantity.GT(zeroDec) {
+	if remaining.GT(zeroDec) {
 		return types.InsufficientLiquidity
 	}
 
@@ -166,13 +166,13 @@ func (k Keeper) ProcessLimitOrder(
 	// Process post-only flag
 	//
 
-	execSent, execRecv, sendAsset, recvAsset := k.MatchUntilEmpty(ctx, order, fillBook)
+	execSent, execRecv, sendAsset, recvAsset, remaining := k.MatchUntilEmpty(ctx, order, fillBook)
 
 	// Process other flags
 	//
 
 	// Insert remaining part of order into book
-	if order.Quantity.GT(zeroDec) {
+	if remaining.GT(zeroDec) {
 		err := k.InsertOrder(ctx, order, insertBook, false)
 
 		if err != nil {
@@ -180,7 +180,7 @@ func (k Keeper) ProcessLimitOrder(
 		}
 
 		// Store tokens in escrow
-		makerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(order.Quantity.BigInt())))
+		makerSendCoins := sdk.NewCoins(sdk.NewCoin(sendAsset, sdk.NewIntFromBigInt(remaining.BigInt())))
 		k.bankKeeper.SendCoinsFromAccountToModule(ctx, order.Account, types.ModuleName, makerSendCoins)
 
 		if err != nil {
@@ -228,7 +228,7 @@ func (k Keeper) MatchUntilEmpty(
 	ctx sdk.Context,
 	order *types.Order,
 	book *types.OrderBook,
-) (execSent, execRecv sdk.Dec, sendAsset, recvAsset string) {
+) (execSent, execRecv sdk.Dec, sendAsset, recvAsset string, remaining sdk.Dec) {
 	assets := strings.Split(order.Market, "-")
 	execRecv = zeroDec
 	execSent = zeroDec
@@ -243,6 +243,8 @@ func (k Keeper) MatchUntilEmpty(
 
 			execSent, execRecv = k.MatchNextBestBid(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
 		}
+
+		remaining = order.Quantity
 	} else {
 		sendAsset = assets[1]
 		recvAsset = assets[0]
@@ -253,6 +255,8 @@ func (k Keeper) MatchUntilEmpty(
 
 			execSent, execRecv = k.MatchNextBestAsk(ctx, order, book, sendAsset, recvAsset, execSent, execRecv)
 		}
+
+		remaining = order.Quantity.Mul(order.Price)
 	}
 
 	return
