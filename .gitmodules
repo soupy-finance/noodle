@@ -1,3 +1,0 @@
-[submodule "ts-client"]
-	path = ts-client
-	url = git@github.com-soupy:soupy-finance/ts-client.git
