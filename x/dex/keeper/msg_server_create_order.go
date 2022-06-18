@@ -187,7 +187,7 @@ func (k Keeper) ProcessLimitOrder(
 			return err
 		}
 
-		EmitAddOfferEvent(ctx, order.Account, order.Id, order.Market, order.Quantity, order.Price, order.Side)
+		EmitAddOfferEvent(ctx, order.Id, order.Account, order.Market, order.Quantity, order.Price, order.Side)
 	}
 
 	EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
@@ -299,9 +299,9 @@ func (k Keeper) MatchNextBestAsk(
 			book.RemoveTopLevel()
 		}
 
-		EmitRemoveOfferEvent(ctx, bestOffer.Account, bestOffer.Id)
+		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
 	} else {
-		EmitUpdateOfferEvent(ctx, bestOffer.Account, bestOffer.Id, bestOffer.Quantity)
+		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
 	}
 
 	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecRecv, bestOffer.Price)

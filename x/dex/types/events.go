@@ -22,9 +22,10 @@ var (
 	AttributeKeyAsset    = "asset"
 )
 
-func NewAddOfferEvent(account sdk.AccAddress, id, market string, quantity, price sdk.Dec, side Side) sdk.Event {
+func NewAddOfferEvent(id string, account sdk.AccAddress, market string, quantity, price sdk.Dec, side Side) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeAddOffer,
+		sdk.NewAttribute(AttributeKeyOrderId, id),
 		sdk.NewAttribute(AttributeKeyAccount, account.String()),
 		sdk.NewAttribute(AttributeKeyMarket, market),
 		sdk.NewAttribute(AttributeKeyQuantity, quantity.String()),
@@ -33,19 +34,21 @@ func NewAddOfferEvent(account sdk.AccAddress, id, market string, quantity, price
 	)
 }
 
-func NewRemoveOfferEvent(account sdk.AccAddress, id string) sdk.Event {
+func NewRemoveOfferEvent(id string, account sdk.AccAddress, market string) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeRemoveOffer,
-		sdk.NewAttribute(AttributeKeyAccount, account.String()),
 		sdk.NewAttribute(AttributeKeyOrderId, id),
+		sdk.NewAttribute(AttributeKeyAccount, account.String()),
+		sdk.NewAttribute(AttributeKeyMarket, market),
 	)
 }
 
-func NewUpdateOfferEvent(account sdk.AccAddress, id string, quantity sdk.Dec) sdk.Event {
+func NewUpdateOfferEvent(id string, account sdk.AccAddress, market string, quantity sdk.Dec) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeUpdateOffer,
-		sdk.NewAttribute(AttributeKeyAccount, account.String()),
 		sdk.NewAttribute(AttributeKeyOrderId, id),
+		sdk.NewAttribute(AttributeKeyAccount, account.String()),
+		sdk.NewAttribute(AttributeKeyMarket, market),
 		sdk.NewAttribute(AttributeKeyQuantity, quantity.String()),
 	)
 }

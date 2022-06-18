@@ -14,7 +14,7 @@ var _ = strconv.Itoa(0)
 
 func CmdObserveDeposit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "observe-deposit [chain-id] [depositor]",
+		Use:   "observe-deposit [chain-id] [depositor] [deposit-id] [quantity] [asset]",
 		Short: "Broadcast message observeDeposit",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

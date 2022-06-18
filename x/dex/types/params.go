@@ -12,10 +12,17 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 var (
 	KeyMarkets = []byte("Markets")
 	// TODO: Determine the default value
-	DefaultMarkets = "{\"wbtc-usdc\": \"{}\", \"eth-usdc\": \"{}\"}"
+	DefaultMarkets = "{\"wbtc-usdc\": {\"fees\": {\"maker\": 0, \"taker\": 0}}, \"eth-usdc\": {\"fees\": {\"maker\": 0, \"taker\": 0}}}"
 )
 
-type MarketsParsed map[string]string
+type MarketsParsed map[string]MarketParsed
+type MarketParsed struct {
+	Fees MarketsParsedFees
+}
+type MarketsParsedFees struct {
+	Maker float32
+	Taker float32
+}
 
 // ParamKeyTable the param key table for launch module
 func ParamKeyTable() paramtypes.KeyTable {
