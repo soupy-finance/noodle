@@ -2,12 +2,14 @@ package types
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkaddress "github.com/cosmos/cosmos-sdk/types/address"
 )
 
+type OrderId string
 type Side byte
 type OrderType string
 type OrderFlag string
@@ -44,7 +46,7 @@ type BookLevel struct {
 }
 
 type Order struct {
-	Id       string
+	Id       OrderId
 	Account  sdk.AccAddress
 	Market   string
 	Side     Side
@@ -55,6 +57,8 @@ type Order struct {
 	IsAmm    bool
 }
 
+type AccountOrders map[OrderId]Order
+
 type StoredLevel struct {
 	Price  string
 	Orders []StoredOrder
@@ -62,16 +66,14 @@ type StoredLevel struct {
 
 type StoredOrder struct {
 	Id       string
-	Account  string
+	Account  []byte
 	Quantity string
 }
 
 type StoredAccountOrder struct {
-	Id       string
-	Account  string
 	Quantity string
 	Price    string
-	Side     string
+	Side     byte
 }
 
 func NewSide(sideByte byte) (Side, bool) {
@@ -153,8 +155,10 @@ func NewOrderFlags(flags []string) (OrderFlags, bool) {
 	return orderFlags, ok
 }
 
-func NewOrderId(account sdk.AccAddress, orderCount uint64) string {
-	orderCountString := strconv.FormatUint(orderCount, 10)
-	hash := sha256.Sum256([]byte(account.String() + ":" + orderCountString))
-	return hex.EncodeToString(hash[:])
+func NewOrderId(account sdk.AccAddress, ordersCount uint64) OrderId {
+	idBytes := make([]byte, sdkaddress.MaxAddrLen+8)
+	copy(idBytes, account)
+	binary.BigEndian.PutUint64(idBytes[len(idBytes)-8:], ordersCount)
+	hash := sha256.Sum256(idBytes)
+	return OrderId(hex.EncodeToString(hash[:]))
 }

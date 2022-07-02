@@ -28197,6 +28197,43 @@ paths:
           type: string
       tags:
         - Query
+  '/soupy-finance/noodle/dex/open_orders/{account}':
+    get:
+      summary: Queries a list of OpenOrders items.
+      operationId: SoupyfinanceNoodleDexOpenOrders
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              orders:
+                type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: account
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /soupy-finance/noodle/dex/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -48533,6 +48570,11 @@ definitions:
       asks:
         type: string
       amm:
+        type: string
+  soupyfinance.noodle.dex.QueryOpenOrdersResponse:
+    type: object
+    properties:
+      orders:
         type: string
   soupyfinance.noodle.dex.QueryParamsResponse:
     type: object

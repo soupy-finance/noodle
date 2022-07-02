@@ -49,12 +49,7 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 		level.Orders = make([]types.Order, len(storedLevel.Orders), len(storedLevel.Orders)+1)
 
 		for j, storedOrder := range storedLevel.Orders {
-			accAddress, err := sdk.AccAddressFromBech32(storedOrder.Account)
-
-			if err != nil {
-				panic(err)
-			}
-
+			var accAddress sdk.AccAddress = storedOrder.Account
 			order := &level.Orders[j]
 			*order = types.Order{
 				Account: accAddress,
@@ -90,11 +85,10 @@ func (k Keeper) GetVirtualBook(ctx sdk.Context, market string, side types.Side) 
 	return book, nil
 }
 
-func (k Keeper) GetAccountOrders(ctx sdk.Context, account sdk.AccAddress) []types.Order {
+func (k Keeper) GetAccountOrders(ctx sdk.Context, account sdk.AccAddress) types.AccountOrders {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersStoreKey))
-	accountKeyBytes := []byte(account.String())
-	storedOrdersBytes := store.Get(accountKeyBytes)
-	var storedOrders []types.StoredAccountOrder
+	storedOrdersBytes := store.Get(account)
+	storedOrders := map[types.OrderId]types.StoredAccountOrder{}
 
 	if storedOrdersBytes != nil {
 		err := json.Unmarshal(storedOrdersBytes, &storedOrders)
@@ -104,17 +98,17 @@ func (k Keeper) GetAccountOrders(ctx sdk.Context, account sdk.AccAddress) []type
 		}
 	}
 
-	orders := make([]types.Order, len(storedOrders))
+	orders := types.AccountOrders{}
 
-	for i, order := range storedOrders {
-		side, ok := types.NewSide(order.Side[0])
+	for orderId, order := range storedOrders {
+		side, ok := types.NewSide(order.Side)
 
 		if !ok {
 			panic("invalid stored account order")
 		}
 
-		orders[i] = types.Order{
-			Id:       order.Id,
+		orders[orderId] = types.Order{
+			Id:       types.OrderId(orderId),
 			Account:  account,
 			Quantity: sdk.MustNewDecFromStr(order.Quantity),
 			Price:    sdk.MustNewDecFromStr(order.Price),
@@ -127,8 +121,7 @@ func (k Keeper) GetAccountOrders(ctx sdk.Context, account sdk.AccAddress) []type
 
 func (k Keeper) GetAccountOrdersCount(ctx sdk.Context, account sdk.AccAddress) (ordersCount uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersCountKey))
-	accountKeyBytes := []byte(account.String())
-	ordersCountBytes := store.Get(accountKeyBytes)
+	ordersCountBytes := store.Get(account)
 
 	if ordersCountBytes == nil {
 		ordersCount = 0
@@ -152,7 +145,7 @@ func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 		for j, order := range level.Orders {
 			storedOrder := &storedLevel.Orders[j]
 			*storedOrder = types.StoredOrder{
-				Account:  order.Account.String(),
+				Account:  order.Account,
 				Quantity: order.Quantity.String(),
 			}
 		}
@@ -195,6 +188,61 @@ func (k Keeper) SaveVirtualBook(ctx sdk.Context, book *types.OrderBook) error {
 
 	err := k.SavePureBook(ctx, book)
 	return err
+}
+
+func (k Keeper) InsertAccountOrder(ctx sdk.Context, order *types.Order) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersStoreKey))
+	accountOrdersBytes := store.Get(order.Account)
+	accountOrders := map[types.OrderId]types.StoredAccountOrder{}
+
+	if accountOrdersBytes != nil {
+		err := json.Unmarshal(accountOrdersBytes, &accountOrders)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	accountOrders[order.Id] = types.StoredAccountOrder{
+		Quantity: order.Quantity.String(),
+		Price:    order.Price.String(),
+		Side:     byte(order.Side),
+	}
+
+	accountOrdersBytes, err := json.Marshal(accountOrders)
+
+	if err != nil {
+		return err
+	}
+
+	store.Set(order.Account, accountOrdersBytes)
+	k.IncrementAccountOrdersCount(ctx, order.Account)
+	return nil
+}
+
+func (k Keeper) RemoveAccountOrder(ctx sdk.Context, order *types.Order) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersStoreKey))
+	accountOrdersBytes := store.Get(order.Account)
+	accountOrders := map[types.OrderId]types.StoredAccountOrder{}
+
+	if accountOrdersBytes != nil {
+		err := json.Unmarshal(accountOrdersBytes, &accountOrders)
+
+		if err != nil {
+			panic(err)
+		}
+
+		accountOrdersBytes, err := json.Marshal(accountOrders)
+
+		if err != nil {
+			return err
+		}
+
+		delete(accountOrders, order.Id)
+		store.Set(order.Account, accountOrdersBytes)
+	}
+
+	return nil
 }
 
 func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order, book *types.OrderBook, save bool) error {
@@ -250,14 +298,13 @@ func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order, book *types.Ord
 		}
 	}
 
-	k.IncrementAccountOrdersCount(ctx, order.Account)
+	k.InsertAccountOrder(ctx, order)
 	return nil
 }
 
 func (k Keeper) IncrementAccountOrdersCount(ctx sdk.Context, account sdk.AccAddress) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersCountKey))
-	accountKeyBytes := []byte(account.String())
-	ordersCountBytes := store.Get(accountKeyBytes)
+	ordersCountBytes := store.Get(account)
 	var ordersCount uint64
 
 	if ordersCountBytes == nil {
@@ -268,5 +315,5 @@ func (k Keeper) IncrementAccountOrdersCount(ctx sdk.Context, account sdk.AccAddr
 	}
 
 	binary.BigEndian.PutUint64(ordersCountBytes, ordersCount+1)
-	store.Set(accountKeyBytes, ordersCountBytes)
+	store.Set(account, ordersCountBytes)
 }

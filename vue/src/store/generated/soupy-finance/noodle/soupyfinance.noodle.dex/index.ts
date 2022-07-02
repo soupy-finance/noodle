@@ -44,6 +44,7 @@ const getDefaultState = () => {
 				Params: {},
 				Book: {},
 				Books: {},
+				OpenOrders: {},
 				
 				_Structure: {
 						Params: getStructure(Params.fromPartial({})),
@@ -92,6 +93,12 @@ export default {
 						(<any> params).query=null
 					}
 			return state.Books[JSON.stringify(params)] ?? {}
+		},
+				getOpenOrders: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.OpenOrders[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -188,6 +195,28 @@ export default {
 				return getters['getBooks']( { params: {...key}, query}) ?? {}
 			} catch (e) {
 				throw new Error('QueryClient:QueryBooks API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryOpenOrders({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryOpenOrders( key.account)).data
+				
+					
+				commit('QUERY', { query: 'OpenOrders', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryOpenOrders', payload: { options: { all }, params: {...key},query }})
+				return getters['getOpenOrders']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryOpenOrders API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},

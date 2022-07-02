@@ -25,6 +25,11 @@ service Query {
 		option (google.api.http).get = "/soupy-finance/noodle/dex/books/{market}";
 	}
 
+// Queries a list of OpenOrders items.
+	rpc OpenOrders(QueryOpenOrdersRequest) returns (QueryOpenOrdersResponse) {
+		option (google.api.http).get = "/soupy-finance/noodle/dex/open_orders/{account}";
+	}
+
 // this line is used by starport scaffolding # 2
 }
 
@@ -55,6 +60,14 @@ message QueryBooksResponse {
   string bids = 1;
   string asks = 2;
   string amm = 3;
+}
+
+message QueryOpenOrdersRequest {
+  string account = 1;
+}
+
+message QueryOpenOrdersResponse {
+  string orders = 1;
 }
 
 // this line is used by starport scaffolding # 3

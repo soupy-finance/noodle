@@ -13,4 +13,5 @@ var (
 	InvalidOrderFlags     = sdkerrors.Register(ModuleName, 1102, "invalid order flags")
 	InsufficientBalance   = sdkerrors.Register(ModuleName, 1103, "insufficient balance for order")
 	InsufficientLiquidity = sdkerrors.Register(ModuleName, 1104, "insufficient liquidity for market order")
+	InvalidQueryAddress   = sdkerrors.Register(ModuleName, 1105, "invalid address queried")
 )

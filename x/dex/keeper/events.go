@@ -5,19 +5,19 @@ import (
 	"github.com/soupy-finance/noodle/x/dex/types"
 )
 
-func EmitAddOfferEvent(ctx sdk.Context, id string, account sdk.AccAddress, market string, quantity, price sdk.Dec, side types.Side) {
+func EmitAddOfferEvent(ctx sdk.Context, id types.OrderId, account sdk.AccAddress, market string, quantity, price sdk.Dec, side types.Side) {
 	ctx.EventManager().EmitEvent(
 		types.NewAddOfferEvent(id, account, market, quantity, price, side),
 	)
 }
 
-func EmitRemoveOfferEvent(ctx sdk.Context, id string, account sdk.AccAddress, market string) {
+func EmitRemoveOfferEvent(ctx sdk.Context, id types.OrderId, account sdk.AccAddress, market string) {
 	ctx.EventManager().EmitEvent(
 		types.NewRemoveOfferEvent(id, account, market),
 	)
 }
 
-func EmitUpdateOfferEvent(ctx sdk.Context, id string, account sdk.AccAddress, market string, quantity sdk.Dec) {
+func EmitUpdateOfferEvent(ctx sdk.Context, id types.OrderId, account sdk.AccAddress, market string, quantity sdk.Dec) {
 	ctx.EventManager().EmitEvent(
 		types.NewUpdateOfferEvent(id, account, market, quantity),
 	)

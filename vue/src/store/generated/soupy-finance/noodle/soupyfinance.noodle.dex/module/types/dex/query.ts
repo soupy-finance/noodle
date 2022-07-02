@@ -33,6 +33,14 @@ export interface QueryBooksResponse {
   amm: string;
 }
 
+export interface QueryOpenOrdersRequest {
+  account: string;
+}
+
+export interface QueryOpenOrdersResponse {
+  orders: string;
+}
+
 const baseQueryParamsRequest: object = {};
 
 export const QueryParamsRequest = {
@@ -421,6 +429,132 @@ export const QueryBooksResponse = {
   },
 };
 
+const baseQueryOpenOrdersRequest: object = { account: "" };
+
+export const QueryOpenOrdersRequest = {
+  encode(
+    message: QueryOpenOrdersRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.account !== "") {
+      writer.uint32(10).string(message.account);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryOpenOrdersRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseQueryOpenOrdersRequest } as QueryOpenOrdersRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.account = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryOpenOrdersRequest {
+    const message = { ...baseQueryOpenOrdersRequest } as QueryOpenOrdersRequest;
+    if (object.account !== undefined && object.account !== null) {
+      message.account = String(object.account);
+    } else {
+      message.account = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryOpenOrdersRequest): unknown {
+    const obj: any = {};
+    message.account !== undefined && (obj.account = message.account);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryOpenOrdersRequest>
+  ): QueryOpenOrdersRequest {
+    const message = { ...baseQueryOpenOrdersRequest } as QueryOpenOrdersRequest;
+    if (object.account !== undefined && object.account !== null) {
+      message.account = object.account;
+    } else {
+      message.account = "";
+    }
+    return message;
+  },
+};
+
+const baseQueryOpenOrdersResponse: object = { orders: "" };
+
+export const QueryOpenOrdersResponse = {
+  encode(
+    message: QueryOpenOrdersResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.orders !== "") {
+      writer.uint32(10).string(message.orders);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryOpenOrdersResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryOpenOrdersResponse,
+    } as QueryOpenOrdersResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.orders = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryOpenOrdersResponse {
+    const message = {
+      ...baseQueryOpenOrdersResponse,
+    } as QueryOpenOrdersResponse;
+    if (object.orders !== undefined && object.orders !== null) {
+      message.orders = String(object.orders);
+    } else {
+      message.orders = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryOpenOrdersResponse): unknown {
+    const obj: any = {};
+    message.orders !== undefined && (obj.orders = message.orders);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryOpenOrdersResponse>
+  ): QueryOpenOrdersResponse {
+    const message = {
+      ...baseQueryOpenOrdersResponse,
+    } as QueryOpenOrdersResponse;
+    if (object.orders !== undefined && object.orders !== null) {
+      message.orders = object.orders;
+    } else {
+      message.orders = "";
+    }
+    return message;
+  },
+};
+
 /** Query defines the gRPC querier service. */
 export interface Query {
   /** Parameters queries the parameters of the module. */
@@ -429,6 +563,8 @@ export interface Query {
   Book(request: QueryBookRequest): Promise<QueryBookResponse>;
   /** Queries a list of Books items. */
   Books(request: QueryBooksRequest): Promise<QueryBooksResponse>;
+  /** Queries a list of OpenOrders items. */
+  OpenOrders(request: QueryOpenOrdersRequest): Promise<QueryOpenOrdersResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -464,6 +600,20 @@ export class QueryClientImpl implements Query {
       data
     );
     return promise.then((data) => QueryBooksResponse.decode(new Reader(data)));
+  }
+
+  OpenOrders(
+    request: QueryOpenOrdersRequest
+  ): Promise<QueryOpenOrdersResponse> {
+    const data = QueryOpenOrdersRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "soupyfinance.noodle.dex.Query",
+      "OpenOrders",
+      data
+    );
+    return promise.then((data) =>
+      QueryOpenOrdersResponse.decode(new Reader(data))
+    );
   }
 }
 

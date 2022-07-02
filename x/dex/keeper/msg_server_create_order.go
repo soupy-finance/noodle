@@ -62,7 +62,7 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 
 	// Create order id from account address and historical order count
 	accountOrdersCount := k.GetAccountOrdersCount(ctx, account)
-	orderId := types.NewOrderId(account, accountOrdersCount)
+	var orderId types.OrderId = types.NewOrderId(account, accountOrdersCount)
 
 	// Create order object and get order book
 	order := types.Order{
@@ -299,6 +299,7 @@ func (k Keeper) MatchNextBestAsk(
 			book.RemoveTopLevel()
 		}
 
+		k.RemoveAccountOrder(ctx, &bestOffer)
 		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
 	} else {
 		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
@@ -344,6 +345,11 @@ func (k Keeper) MatchNextBestBid(
 		if len(level.Orders) == 0 {
 			book.RemoveTopLevel()
 		}
+
+		k.RemoveAccountOrder(ctx, &bestOffer)
+		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
+	} else {
+		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
 	}
 
 	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecSent, bestOffer.Price)
