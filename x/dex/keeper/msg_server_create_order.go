@@ -302,6 +302,7 @@ func (k Keeper) MatchNextBestAsk(
 		k.RemoveAccountOrder(ctx, &bestOffer)
 		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
 	} else {
+		k.UpdateAccountOrder(ctx, &bestOffer, localExecRecv)
 		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
 	}
 
@@ -349,6 +350,7 @@ func (k Keeper) MatchNextBestBid(
 		k.RemoveAccountOrder(ctx, &bestOffer)
 		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
 	} else {
+		k.UpdateAccountOrder(ctx, &bestOffer, localExecSent)
 		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
 	}
 

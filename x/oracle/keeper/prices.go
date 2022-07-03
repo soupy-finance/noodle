@@ -64,11 +64,7 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 			return false
 		}
 
-		price, err := sdk.NewDecFromStr(string(priceBytes))
-
-		if err != nil {
-			panic(err)
-		}
+		price := sdk.MustNewDecFromStr(string(priceBytes))
 
 		weight := validator.GetConsensusPower(validator.GetBondedTokens())
 		priceInfo := PriceInfo{price, weight}

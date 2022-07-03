@@ -79,7 +79,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 
 					switch denom {
 					case "usdc":
-						quantityDec, _ = sdk.NewDecFromStr("2000")
+						quantityDec = sdk.MustNewDecFromStr("2000")
 					default:
 						quantityDec = sdk.ZeroDec()
 					}
@@ -142,9 +142,9 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 
 					switch denom {
 					case "usdc":
-						quantityDec, _ = sdk.NewDecFromStr("2000")
+						quantityDec = sdk.MustNewDecFromStr("2000")
 					case "eth":
-						quantityDec, _ = sdk.NewDecFromStr("1")
+						quantityDec = sdk.MustNewDecFromStr("1")
 					default:
 						quantityDec = sdk.ZeroDec()
 					}
@@ -229,9 +229,9 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 
 					switch denom {
 					case "usdc":
-						quantityDec, _ = sdk.NewDecFromStr("2000")
+						quantityDec = sdk.MustNewDecFromStr("2000")
 					case "eth":
-						quantityDec, _ = sdk.NewDecFromStr("1")
+						quantityDec = sdk.MustNewDecFromStr("1")
 					default:
 						quantityDec = sdk.ZeroDec()
 					}

@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkaddress "github.com/cosmos/cosmos-sdk/types/address"
 )
 
 type OrderId string
@@ -66,14 +65,17 @@ type StoredLevel struct {
 
 type StoredOrder struct {
 	Id       string
-	Account  []byte
+	Account  string
 	Quantity string
 }
 
 type StoredAccountOrder struct {
-	Quantity string
+	Market   string
 	Price    string
-	Side     byte
+	Quantity string
+	Filled   string
+	Side     string
+	Date     int64
 }
 
 func NewSide(sideByte byte) (Side, bool) {
@@ -156,7 +158,7 @@ func NewOrderFlags(flags []string) (OrderFlags, bool) {
 }
 
 func NewOrderId(account sdk.AccAddress, ordersCount uint64) OrderId {
-	idBytes := make([]byte, sdkaddress.MaxAddrLen+8)
+	idBytes := make([]byte, 16) // 8 bytes for address, 8 for count
 	copy(idBytes, account)
 	binary.BigEndian.PutUint64(idBytes[len(idBytes)-8:], ordersCount)
 	hash := sha256.Sum256(idBytes)

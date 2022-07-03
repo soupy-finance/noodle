@@ -33,11 +33,7 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 	book.Levels = make([]types.BookLevel, len(storedBook), len(storedBook)+1)
 
 	for i, storedLevel := range storedBook {
-		price, err := sdk.NewDecFromStr(storedLevel.Price)
-
-		if err != nil {
-			panic(err)
-		}
+		price := sdk.MustNewDecFromStr(storedLevel.Price)
 
 		level := &book.Levels[i]
 		*level = types.BookLevel{
@@ -49,7 +45,12 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 		level.Orders = make([]types.Order, len(storedLevel.Orders), len(storedLevel.Orders)+1)
 
 		for j, storedOrder := range storedLevel.Orders {
-			var accAddress sdk.AccAddress = storedOrder.Account
+			accAddress, err := sdk.AccAddressFromBech32(storedOrder.Account)
+
+			if err != nil {
+				panic(err)
+			}
+
 			order := &level.Orders[j]
 			*order = types.Order{
 				Account: accAddress,
@@ -58,12 +59,7 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 				Price:   level.Price,
 			}
 
-			quantity, err := sdk.NewDecFromStr(storedOrder.Quantity)
-
-			if err != nil {
-				panic(err)
-			}
-
+			quantity := sdk.MustNewDecFromStr(storedOrder.Quantity)
 			order.Quantity = quantity
 		}
 	}
@@ -101,7 +97,7 @@ func (k Keeper) GetAccountOrders(ctx sdk.Context, account sdk.AccAddress) types.
 	orders := types.AccountOrders{}
 
 	for orderId, order := range storedOrders {
-		side, ok := types.NewSide(order.Side)
+		side, ok := types.NewSide(order.Side[0])
 
 		if !ok {
 			panic("invalid stored account order")
@@ -145,7 +141,7 @@ func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 		for j, order := range level.Orders {
 			storedOrder := &storedLevel.Orders[j]
 			*storedOrder = types.StoredOrder{
-				Account:  order.Account,
+				Account:  order.Account.String(),
 				Quantity: order.Quantity.String(),
 			}
 		}
@@ -206,10 +202,45 @@ func (k Keeper) InsertAccountOrder(ctx sdk.Context, order *types.Order) error {
 	accountOrders[order.Id] = types.StoredAccountOrder{
 		Quantity: order.Quantity.String(),
 		Price:    order.Price.String(),
-		Side:     byte(order.Side),
+		Side:     string(order.Side),
+		Filled:   "0",
+		Date:     ctx.BlockTime().Unix(),
 	}
 
 	accountOrdersBytes, err := json.Marshal(accountOrders)
+
+	if err != nil {
+		return err
+	}
+
+	store.Set(order.Account, accountOrdersBytes)
+	k.IncrementAccountOrdersCount(ctx, order.Account)
+	return nil
+}
+
+func (k Keeper) UpdateAccountOrder(ctx sdk.Context, order *types.Order, quantityChange sdk.Dec) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AccountOrdersStoreKey))
+	accountOrdersBytes := store.Get(order.Account)
+	accountOrders := map[types.OrderId]types.StoredAccountOrder{}
+
+	if accountOrdersBytes == nil {
+		panic("updating nonexistent order")
+	}
+
+	err := json.Unmarshal(accountOrdersBytes, &accountOrders)
+
+	if err != nil {
+		panic(err)
+	}
+
+	accountOrder, exists := accountOrders[order.Id]
+
+	if !exists {
+		panic("updating nonexistent order")
+	}
+
+	accountOrder.Filled = sdk.MustNewDecFromStr(accountOrder.Filled).Add(quantityChange).String()
+	accountOrdersBytes, err = json.Marshal(accountOrders)
 
 	if err != nil {
 		return err

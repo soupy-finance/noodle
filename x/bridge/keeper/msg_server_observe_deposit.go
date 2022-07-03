@@ -78,12 +78,7 @@ func (k msgServer) ObserveDeposit(goCtx context.Context, msg *types.MsgObserveDe
 		k.DeleteDepositObservations(ctx, depositKeyBytes, msg)
 
 		// Grant user tokens on exchange
-		quantity, err := sdk.NewDecFromStr(msg.Quantity)
-
-		if err != nil {
-			panic(err)
-		}
-
+		quantity := sdk.MustNewDecFromStr(msg.Quantity)
 		coins := sdk.NewCoins(sdk.NewCoin(msg.Asset, sdk.NewIntFromBigInt(quantity.BigInt())))
 		err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
 
