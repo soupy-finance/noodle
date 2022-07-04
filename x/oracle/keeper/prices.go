@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -29,7 +30,23 @@ func (p ValPriceList) Swap(i, j int) {
 
 func (p ValPriceList) Less(i, j int) bool { return p.prices[i].val.LT(p.prices[j].val) }
 
-func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) string {
+func (k Keeper) GetAssetPrices(ctx sdk.Context, assets []string) []string {
+	prices := make([]string, len(assets))
+
+	for i, asset := range assets {
+		price, exists := k.prices[asset]
+
+		if !exists {
+			price = sdk.ZeroDec()
+		}
+
+		prices[i] = price.String()
+	}
+
+	return prices
+}
+
+func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) sdk.Dec {
 	var priceList ValPriceList
 	aggPrice := sdk.ZeroDec()
 
@@ -48,23 +65,16 @@ func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) string {
 		}
 	}
 
-	return aggPrice.String()
+	return aggPrice
 }
 
 func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *ValPriceList) (fn func(index int64, validator staking.ValidatorI) (stop bool)) {
-	// Get store
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PricesKey))
-
 	return func(index int64, validator staking.ValidatorI) (stop bool) {
-		// Get price from store and update prices slice
-		valAssetKeyBytes := append(validator.GetOperator(), []byte(asset)...)
-		priceBytes := store.Get(valAssetKeyBytes)
+		price, exists := k.valPrices[asset]
 
-		if priceBytes == nil {
+		if !exists {
 			return false
 		}
-
-		price := sdk.MustNewDecFromStr(string(priceBytes))
 
 		weight := validator.GetConsensusPower(validator.GetBondedTokens())
 		priceInfo := PriceInfo{price, weight}
@@ -73,4 +83,42 @@ func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *Va
 
 		return false
 	}
+}
+
+func (k Keeper) CachePrices(ctx sdk.Context) {
+	if k.pricesCached {
+		return
+	}
+
+	assets := k.AssetsParsed(ctx)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PricesKey))
+
+	for _, asset := range assets {
+		priceStr := store.Get([]byte(asset))
+
+		if priceStr != nil {
+			k.prices[asset] = sdk.MustNewDecFromStr(string(priceStr))
+		}
+	}
+
+	k.pricesCached = true
+}
+
+func (k Keeper) UpdateAndSavePrices(ctx sdk.Context) {
+	assets := k.AssetsParsed(ctx)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PricesKey))
+
+	for _, asset := range assets {
+		price := k.AggAssetPrice(ctx, asset)
+		k.prices[asset] = price
+		store.Set([]byte(asset), []byte(price.String()))
+	}
+
+	pricesStr, err := json.Marshal(k.prices)
+
+	if err != nil {
+		panic(err)
+	}
+
+	EmitPricesEvents(ctx, string(pricesStr))
 }

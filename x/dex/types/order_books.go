@@ -31,6 +31,11 @@ const (
 	PostOnlyFlag OrderFlag = "post_only"
 )
 
+type OrderBooks struct {
+	Bids OrderBook
+	Asks OrderBook
+}
+
 type OrderBook struct {
 	Market string
 	Side   Side
@@ -158,9 +163,10 @@ func NewOrderFlags(flags []string) (OrderFlags, bool) {
 }
 
 func NewOrderId(account sdk.AccAddress, ordersCount uint64) OrderId {
-	idBytes := make([]byte, 16) // 8 bytes for address, 8 for count
-	copy(idBytes, account)
-	binary.BigEndian.PutUint64(idBytes[len(idBytes)-8:], ordersCount)
+	idBytes := []byte(account.String())
+	countBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(countBytes, ordersCount)
+	idBytes = append(idBytes, countBytes...)
 	hash := sha256.Sum256(idBytes)
 	return OrderId(hex.EncodeToString(hash[:]))
 }

@@ -348,3 +348,9 @@ func (k Keeper) IncrementAccountOrdersCount(ctx sdk.Context, account sdk.AccAddr
 	binary.BigEndian.PutUint64(ordersCountBytes, ordersCount+1)
 	store.Set(account, ordersCountBytes)
 }
+
+func (k Keeper) SaveBooks(ctx sdk.Context) {
+	// store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.BooksStoreKey))
+	// bookKeyBytes := []byte(market + ":" + string(side))
+	// storedBookBytes := store.Get(bookKeyBytes)
+}

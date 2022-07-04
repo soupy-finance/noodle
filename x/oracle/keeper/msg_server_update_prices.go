@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/soupy-finance/noodle/x/oracle/types"
@@ -37,15 +36,21 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 
 	// Iterate assets and update their prices for the validator
 	assets := k.AssetsParsed(ctx)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PricesKey))
 
 	for _, asset := range assets {
-		price, set := data[asset]
+		priceStr, exists := data[asset]
 
-		if set {
-			valAssetKeyBytes := append(valAddr, []byte(asset)...)
-			store.Set(valAssetKeyBytes, []byte(price))
+		if !exists {
+			continue
 		}
+
+		price, err := sdk.NewDecFromStr(priceStr)
+
+		if err != nil {
+			continue
+		}
+
+		k.valPrices[valAddr.String()+":"+asset] = price
 	}
 
 	return &types.MsgUpdatePricesResponse{}, nil
