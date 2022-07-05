@@ -24,7 +24,6 @@ func TestMsgObserveDeposit(t *testing.T) {
 		msgs          []types.MsgObserveDeposit
 		err           error
 		check         func(*testing.T, keeper.Keeper, types.MsgServer, context.Context, *types.MsgObserveDeposit, *types.MsgObserveDepositResponse)
-		AccountKeeper AccountKeeper
 		bankKeeper    BankKeeper
 		stakingKeeper StakingKeeper
 	}{

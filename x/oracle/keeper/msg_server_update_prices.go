@@ -13,13 +13,14 @@ func (k msgServer) UpdatePrices(goCtx context.Context, msg *types.MsgUpdatePrice
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Parse inputs
-	valAddr, err := sdk.ValAddressFromBech32(msg.Creator)
+	accAddr, err := sdk.AccAddressFromBech32(msg.Creator)
 
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
 	// Verify caller is a validator
+	valAddr := sdk.ValAddress(accAddr)
 	val, found := k.stakingKeeper.GetValidator(ctx, valAddr)
 
 	if !found || !val.IsBonded() {

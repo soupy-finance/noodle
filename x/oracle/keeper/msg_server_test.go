@@ -10,7 +10,11 @@ import (
 	"github.com/soupy-finance/noodle/x/oracle/types"
 )
 
-func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := keepertest.OracleKeeper(t)
-	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
+func setupMsgServer(
+	t testing.TB,
+	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
+) (keeper.Keeper, types.MsgServer, context.Context) {
+	k, ctx := keepertest.OracleKeeper(t, bankKeeper, stakingKeeper)
+	return *k, keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
 }

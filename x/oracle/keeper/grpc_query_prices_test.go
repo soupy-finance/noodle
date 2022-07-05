@@ -80,6 +80,7 @@ func (k BankKeeper) SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coi
 type StakingKeeper struct {
 	_getValidator                   func(sdk.Context, sdk.ValAddress) (staking.Validator, bool)
 	_iterateBondedValidatorsByPower func(sdk.Context, func(int64, staking.ValidatorI) bool)
+	_powerReduction                 func(sdk.Context) sdk.Int
 }
 
 func (k StakingKeeper) GetValidator(ctx sdk.Context, address sdk.ValAddress) (validator staking.Validator, found bool) {
@@ -87,4 +88,7 @@ func (k StakingKeeper) GetValidator(ctx sdk.Context, address sdk.ValAddress) (va
 }
 func (k StakingKeeper) IterateBondedValidatorsByPower(ctx sdk.Context, fn func(index int64, validator staking.ValidatorI) (stop bool)) {
 	k._iterateBondedValidatorsByPower(ctx, fn)
+}
+func (k StakingKeeper) PowerReduction(ctx sdk.Context) sdk.Int {
+	return k._powerReduction(ctx)
 }

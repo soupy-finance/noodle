@@ -10,6 +10,7 @@ type StakingKeeper interface {
 	// Methods imported from staking should be defined here
 	GetValidator(ctx sdk.Context, address sdk.ValAddress) (validator staking.Validator, found bool)
 	IterateBondedValidatorsByPower(ctx sdk.Context, fn func(index int64, validator staking.ValidatorI) (stop bool))
+	PowerReduction(ctx sdk.Context) sdk.Int
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

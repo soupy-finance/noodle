@@ -59,7 +59,7 @@ func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) sdk.Dec {
 	for _, priceInfo := range priceList.prices {
 		weightSeen += priceInfo.weight
 
-		if weightSeen > priceList.netWeight {
+		if weightSeen >= priceList.netWeight/2 {
 			aggPrice = priceInfo.val
 			break
 		}
@@ -70,13 +70,13 @@ func (k Keeper) AggAssetPrice(ctx sdk.Context, asset string) sdk.Dec {
 
 func (k Keeper) GetValidatorPriceFn(ctx sdk.Context, asset string, priceList *ValPriceList) (fn func(index int64, validator staking.ValidatorI) (stop bool)) {
 	return func(index int64, validator staking.ValidatorI) (stop bool) {
-		price, exists := k.valPrices[asset]
+		price, exists := k.valPrices[validator.GetOperator().String()+":"+asset]
 
 		if !exists {
 			return false
 		}
 
-		weight := validator.GetConsensusPower(validator.GetBondedTokens())
+		weight := validator.GetConsensusPower(k.stakingKeeper.PowerReduction(ctx))
 		priceInfo := PriceInfo{price, weight}
 		(*priceList).prices = append((*priceList).prices, priceInfo)
 		(*priceList).netWeight += weight
