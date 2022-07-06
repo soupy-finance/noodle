@@ -12,7 +12,7 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 var (
 	KeyAssets = []byte("Assets")
 	// TODO: Determine the default value
-	DefaultAssets = "[\"wbtc\", \"eth\"]"
+	DefaultAssets = "[\"eth\", \"atom\", \"sol\", \"avax\", \"luna\", \"bnb\", \"ftm\", \"matic\"]"
 )
 
 type AssetsParsed []string
