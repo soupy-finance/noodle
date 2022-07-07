@@ -7,12 +7,12 @@ import (
 var (
 	EventTypePrices = "prices"
 
-	AttributeKeyPrices = "prices"
+	AttributeKeyData = "data"
 )
 
 func NewPricesEvent(prices string) sdk.Event {
 	return sdk.NewEvent(
 		EventTypePrices,
-		sdk.NewAttribute(AttributeKeyPrices, prices),
+		sdk.NewAttribute(AttributeKeyData, prices),
 	)
 }

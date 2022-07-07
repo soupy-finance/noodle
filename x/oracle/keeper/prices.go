@@ -120,5 +120,5 @@ func (k Keeper) UpdateAndSavePrices(ctx sdk.Context) {
 		panic(err)
 	}
 
-	EmitPricesEvents(ctx, string(pricesStr))
+	EmitPricesEvent(ctx, string(pricesStr))
 }

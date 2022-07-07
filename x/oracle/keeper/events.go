@@ -5,7 +5,7 @@ import (
 	"github.com/soupy-finance/noodle/x/oracle/types"
 )
 
-func EmitPricesEvents(ctx sdk.Context, prices string) {
+func EmitPricesEvent(ctx sdk.Context, prices string) {
 	ctx.EventManager().EmitEvent(
 		types.NewPricesEvent(prices),
 	)
