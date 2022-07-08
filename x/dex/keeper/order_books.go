@@ -200,8 +200,9 @@ func (k Keeper) InsertAccountOrder(ctx sdk.Context, order *types.Order) error {
 	}
 
 	accountOrders[order.Id] = types.StoredAccountOrder{
-		Quantity: order.Quantity.String(),
+		Market:   order.Market,
 		Price:    order.Price.String(),
+		Quantity: order.Quantity.String(),
 		Side:     string(order.Side),
 		Filled:   "0",
 		Date:     ctx.BlockTime().Unix(),
