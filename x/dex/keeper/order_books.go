@@ -53,6 +53,7 @@ func (k Keeper) GetPureBook(ctx sdk.Context, market string, side types.Side) (*t
 
 			order := &level.Orders[j]
 			*order = types.Order{
+				Id:      types.OrderId(storedOrder.Id),
 				Account: accAddress,
 				Market:  market,
 				Side:    side,
@@ -141,6 +142,7 @@ func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 		for j, order := range level.Orders {
 			storedOrder := &storedLevel.Orders[j]
 			*storedOrder = types.StoredOrder{
+				Id:       string(order.Id),
 				Account:  order.Account.String(),
 				Quantity: order.Quantity.String(),
 			}
@@ -264,13 +266,13 @@ func (k Keeper) RemoveAccountOrder(ctx sdk.Context, order *types.Order) error {
 			panic(err)
 		}
 
+		delete(accountOrders, order.Id)
 		accountOrdersBytes, err := json.Marshal(accountOrders)
 
 		if err != nil {
 			return err
 		}
 
-		delete(accountOrders, order.Id)
 		store.Set(order.Account, accountOrdersBytes)
 	}
 
