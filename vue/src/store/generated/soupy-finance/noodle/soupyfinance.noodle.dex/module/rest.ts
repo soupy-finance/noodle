@@ -9,7 +9,11 @@
  * ---------------------------------------------------------------
  */
 
-export type DexMsgCreateOrderResponse = object;
+export type DexMsgCancelOrderResponse = object;
+
+export interface DexMsgCreateOrderResponse {
+  id?: string;
+}
 
 /**
  * Params defines the parameters for the module.

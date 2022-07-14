@@ -13,7 +13,19 @@ export interface MsgCreateOrder {
   flags: string[];
 }
 
-export interface MsgCreateOrderResponse {}
+export interface MsgCreateOrderResponse {
+  id: string;
+}
+
+export interface MsgCancelOrder {
+  creator: string;
+  market: string;
+  side: boolean;
+  price: string;
+  id: string;
+}
+
+export interface MsgCancelOrderResponse {}
 
 const baseMsgCreateOrder: object = {
   creator: "",
@@ -187,10 +199,16 @@ export const MsgCreateOrder = {
   },
 };
 
-const baseMsgCreateOrderResponse: object = {};
+const baseMsgCreateOrderResponse: object = { id: "" };
 
 export const MsgCreateOrderResponse = {
-  encode(_: MsgCreateOrderResponse, writer: Writer = Writer.create()): Writer {
+  encode(
+    message: MsgCreateOrderResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
     return writer;
   },
 
@@ -198,6 +216,189 @@ export const MsgCreateOrderResponse = {
     const reader = input instanceof Uint8Array ? new Reader(input) : input;
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MsgCreateOrderResponse {
+    const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+    if (object.id !== undefined && object.id !== null) {
+      message.id = String(object.id);
+    } else {
+      message.id = "";
+    }
+    return message;
+  },
+
+  toJSON(message: MsgCreateOrderResponse): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<MsgCreateOrderResponse>
+  ): MsgCreateOrderResponse {
+    const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+    if (object.id !== undefined && object.id !== null) {
+      message.id = object.id;
+    } else {
+      message.id = "";
+    }
+    return message;
+  },
+};
+
+const baseMsgCancelOrder: object = {
+  creator: "",
+  market: "",
+  side: false,
+  price: "",
+  id: "",
+};
+
+export const MsgCancelOrder = {
+  encode(message: MsgCancelOrder, writer: Writer = Writer.create()): Writer {
+    if (message.creator !== "") {
+      writer.uint32(10).string(message.creator);
+    }
+    if (message.market !== "") {
+      writer.uint32(18).string(message.market);
+    }
+    if (message.side === true) {
+      writer.uint32(24).bool(message.side);
+    }
+    if (message.price !== "") {
+      writer.uint32(34).string(message.price);
+    }
+    if (message.id !== "") {
+      writer.uint32(42).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgCancelOrder {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgCancelOrder } as MsgCancelOrder;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.creator = reader.string();
+          break;
+        case 2:
+          message.market = reader.string();
+          break;
+        case 3:
+          message.side = reader.bool();
+          break;
+        case 4:
+          message.price = reader.string();
+          break;
+        case 5:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MsgCancelOrder {
+    const message = { ...baseMsgCancelOrder } as MsgCancelOrder;
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator);
+    } else {
+      message.creator = "";
+    }
+    if (object.market !== undefined && object.market !== null) {
+      message.market = String(object.market);
+    } else {
+      message.market = "";
+    }
+    if (object.side !== undefined && object.side !== null) {
+      message.side = Boolean(object.side);
+    } else {
+      message.side = false;
+    }
+    if (object.price !== undefined && object.price !== null) {
+      message.price = String(object.price);
+    } else {
+      message.price = "";
+    }
+    if (object.id !== undefined && object.id !== null) {
+      message.id = String(object.id);
+    } else {
+      message.id = "";
+    }
+    return message;
+  },
+
+  toJSON(message: MsgCancelOrder): unknown {
+    const obj: any = {};
+    message.creator !== undefined && (obj.creator = message.creator);
+    message.market !== undefined && (obj.market = message.market);
+    message.side !== undefined && (obj.side = message.side);
+    message.price !== undefined && (obj.price = message.price);
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<MsgCancelOrder>): MsgCancelOrder {
+    const message = { ...baseMsgCancelOrder } as MsgCancelOrder;
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator;
+    } else {
+      message.creator = "";
+    }
+    if (object.market !== undefined && object.market !== null) {
+      message.market = object.market;
+    } else {
+      message.market = "";
+    }
+    if (object.side !== undefined && object.side !== null) {
+      message.side = object.side;
+    } else {
+      message.side = false;
+    }
+    if (object.price !== undefined && object.price !== null) {
+      message.price = object.price;
+    } else {
+      message.price = "";
+    }
+    if (object.id !== undefined && object.id !== null) {
+      message.id = object.id;
+    } else {
+      message.id = "";
+    }
+    return message;
+  },
+};
+
+const baseMsgCancelOrderResponse: object = {};
+
+export const MsgCancelOrderResponse = {
+  encode(_: MsgCancelOrderResponse, writer: Writer = Writer.create()): Writer {
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgCancelOrderResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgCancelOrderResponse } as MsgCancelOrderResponse;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -209,26 +410,27 @@ export const MsgCreateOrderResponse = {
     return message;
   },
 
-  fromJSON(_: any): MsgCreateOrderResponse {
-    const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+  fromJSON(_: any): MsgCancelOrderResponse {
+    const message = { ...baseMsgCancelOrderResponse } as MsgCancelOrderResponse;
     return message;
   },
 
-  toJSON(_: MsgCreateOrderResponse): unknown {
+  toJSON(_: MsgCancelOrderResponse): unknown {
     const obj: any = {};
     return obj;
   },
 
-  fromPartial(_: DeepPartial<MsgCreateOrderResponse>): MsgCreateOrderResponse {
-    const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+  fromPartial(_: DeepPartial<MsgCancelOrderResponse>): MsgCancelOrderResponse {
+    const message = { ...baseMsgCancelOrderResponse } as MsgCancelOrderResponse;
     return message;
   },
 };
 
 /** Msg defines the Msg service. */
 export interface Msg {
-  /** this line is used by starport scaffolding # proto/tx/rpc */
   CreateOrder(request: MsgCreateOrder): Promise<MsgCreateOrderResponse>;
+  /** this line is used by starport scaffolding # proto/tx/rpc */
+  CancelOrder(request: MsgCancelOrder): Promise<MsgCancelOrderResponse>;
 }
 
 export class MsgClientImpl implements Msg {
@@ -245,6 +447,18 @@ export class MsgClientImpl implements Msg {
     );
     return promise.then((data) =>
       MsgCreateOrderResponse.decode(new Reader(data))
+    );
+  }
+
+  CancelOrder(request: MsgCancelOrder): Promise<MsgCancelOrderResponse> {
+    const data = MsgCancelOrder.encode(request).finish();
+    const promise = this.rpc.request(
+      "soupyfinance.noodle.dex.Msg",
+      "CancelOrder",
+      data
+    );
+    return promise.then((data) =>
+      MsgCancelOrderResponse.decode(new Reader(data))
     );
   }
 }

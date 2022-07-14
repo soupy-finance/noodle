@@ -19,7 +19,6 @@ var (
 	AttributeKeyPrice    = "price"
 	AttributeKeySide     = "side"
 	AttributeKeyOrderId  = "order_id"
-	AttributeKeyAsset    = "asset"
 )
 
 func NewAddOfferEvent(id OrderId, account sdk.AccAddress, market string, quantity, price sdk.Dec, side Side) sdk.Event {
@@ -53,7 +52,7 @@ func NewUpdateOfferEvent(id OrderId, account sdk.AccAddress, market string, quan
 	)
 }
 
-func NewTradeExecEvent(maker, taker sdk.AccAddress, market string, quantity, price sdk.Dec) sdk.Event {
+func NewTradeExecEvent(maker, taker sdk.AccAddress, market string, quantity, price sdk.Dec, side Side) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeTradeExec,
 		sdk.NewAttribute(AttributeKeyMaker, maker.String()),
@@ -61,14 +60,15 @@ func NewTradeExecEvent(maker, taker sdk.AccAddress, market string, quantity, pri
 		sdk.NewAttribute(AttributeKeyMarket, market),
 		sdk.NewAttribute(AttributeKeyQuantity, quantity.String()),
 		sdk.NewAttribute(AttributeKeyPrice, price.String()),
+		sdk.NewAttribute(AttributeKeySide, string(side)),
 	)
 }
 
-func NewBalanceChangeEvent(account sdk.AccAddress, asset string, quantity sdk.Dec) sdk.Event {
+func NewBalanceChangeEvent(account sdk.AccAddress, market string, quantity sdk.Dec) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeBalanceChange,
 		sdk.NewAttribute(AttributeKeyAccount, toEventAccAddress(account)),
-		sdk.NewAttribute(AttributeKeyAsset, asset),
+		sdk.NewAttribute(AttributeKeyMarket, market),
 		sdk.NewAttribute(AttributeKeyQuantity, quantity.String()),
 	)
 }

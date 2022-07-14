@@ -23,9 +23,9 @@ func EmitUpdateOfferEvent(ctx sdk.Context, id types.OrderId, account sdk.AccAddr
 	)
 }
 
-func EmitTradeExecEvent(ctx sdk.Context, maker, taker sdk.AccAddress, market string, quantity, price sdk.Dec) {
+func EmitTradeExecEvent(ctx sdk.Context, maker, taker sdk.AccAddress, market string, quantity, price sdk.Dec, side types.Side) {
 	ctx.EventManager().EmitEvent(
-		types.NewTradeExecEvent(maker, taker, market, quantity, price),
+		types.NewTradeExecEvent(maker, taker, market, quantity, price, side),
 	)
 }
 

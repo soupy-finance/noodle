@@ -29,6 +29,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 		name          string
 		msg           types.MsgCreateOrder
 		msgs          []types.MsgCreateOrder
+		cancelMsg     types.MsgCancelOrder
 		err           error
 		init          func()
 		check         func(*testing.T, keeper.Keeper, types.MsgServer, context.Context, *types.MsgCreateOrder, *types.MsgCreateOrderResponse)
@@ -119,6 +120,8 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 			},
 			init: func() {
 				balances[addr1]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("2000").BigInt())
+				balances[addr1]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
+				balances[addr2]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
 				balances[addr2]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("1").BigInt())
 			},
 			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
@@ -188,7 +191,7 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 			name: "limit don't match 1 eth at 2000",
 			msgs: []types.MsgCreateOrder{
 				{
-					Creator:   sample.AccAddress(),
+					Creator:   addr1,
 					Market:    "eth-usdc",
 					Side:      false,
 					OrderType: "limit",
@@ -196,13 +199,19 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 					Quantity:  "1",
 				},
 				{
-					Creator:   sample.AccAddress(),
+					Creator:   addr2,
 					Market:    "eth-usdc",
 					Side:      true,
 					OrderType: "limit",
 					Price:     "2001",
 					Quantity:  "1",
 				},
+			},
+			init: func() {
+				balances[addr1]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("2000").BigInt())
+				balances[addr1]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
+				balances[addr2]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
+				balances[addr2]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("1").BigInt())
 			},
 			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
 				ctx := sdk.UnwrapSDKContext(goCtx)
@@ -249,6 +258,175 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "limit partial match 0.5 eth at 2000",
+			msgs: []types.MsgCreateOrder{
+				{
+					Creator:   addr1,
+					Market:    "eth-usdc",
+					Side:      false,
+					OrderType: "limit",
+					Price:     "2000",
+					Quantity:  "1",
+				},
+				{
+					Creator:   addr2,
+					Market:    "eth-usdc",
+					Side:      true,
+					OrderType: "limit",
+					Price:     "2000",
+					Quantity:  "0.5",
+				},
+			},
+			init: func() {
+				balances[addr1]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("2000").BigInt())
+				balances[addr1]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
+				balances[addr2]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
+				balances[addr2]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("1").BigInt())
+			},
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
+				ctx := sdk.UnwrapSDKContext(goCtx)
+				side, _ := types.NewSide('b')
+				book, _ := k.GetVirtualBook(ctx, "eth-usdc", side)
+				addr1Eth := sdk.NewDecFromIntWithPrec(balances[addr1]["eth"], sdk.Precision).String()
+				addr2Eth := sdk.NewDecFromIntWithPrec(balances[addr2]["eth"], sdk.Precision).String()
+				addr1Usdc := sdk.NewDecFromIntWithPrec(balances[addr1]["usdc"], sdk.Precision).String()
+				addr2Usdc := sdk.NewDecFromIntWithPrec(balances[addr2]["usdc"], sdk.Precision).String()
+
+				require.Equal(t, 1, len(book.Levels))
+				require.Equal(t, sdk.MustNewDecFromStr("0.5").String(), book.Levels[0].Orders[0].Quantity.String())
+				require.Equal(t, sdk.MustNewDecFromStr("0.5").String(), addr1Eth)
+				require.Equal(t, sdk.MustNewDecFromStr("1000").String(), addr2Usdc)
+				require.Equal(t, sdk.ZeroDec().String(), addr1Usdc)
+				require.Equal(t, sdk.MustNewDecFromStr("0.5").String(), addr2Eth)
+			},
+			bankKeeper: BankKeeper{
+				_getBalance: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+					var quantityDec sdk.Dec
+
+					switch denom {
+					case "usdc":
+						quantityDec = sdk.MustNewDecFromStr("2000")
+					case "eth":
+						quantityDec = sdk.MustNewDecFromStr("1")
+					default:
+						quantityDec = sdk.ZeroDec()
+					}
+
+					return sdk.NewCoin(denom, sdk.NewIntFromBigInt(quantityDec.BigInt()))
+				},
+				_sendCoins: func(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amts sdk.Coins) error {
+					for i := range amts {
+						coin := amts[i]
+						fromAddrBech32 := fromAddr.String()
+						toAddrBech32 := toAddr.String()
+						balances[fromAddrBech32][coin.Denom] = balances[fromAddrBech32][coin.Denom].Sub(coin.Amount)
+						balances[toAddrBech32][coin.Denom] = balances[toAddrBech32][coin.Denom].Add(coin.Amount)
+					}
+
+					return nil
+				},
+				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amts sdk.Coins) error {
+					for i := range amts {
+						coin := amts[i]
+						balances[recipientAddr.String()][coin.Denom] = balances[recipientAddr.String()][coin.Denom].Add(coin.Amount)
+					}
+
+					return nil
+				},
+				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amts sdk.Coins) error {
+					for i := range amts {
+						coin := amts[i]
+						amtStr := coin.Amount.String()
+						balStr := balances[senderAddr.String()][coin.Denom].String()
+						_ = amtStr
+						_ = balStr
+						balances[senderAddr.String()][coin.Denom] = balances[senderAddr.String()][coin.Denom].Sub(coin.Amount)
+					}
+
+					return nil
+				},
+			},
+		},
+		{
+			name: "cancel order",
+			msg: types.MsgCreateOrder{
+				Creator:   addr1,
+				Market:    "eth-usdc",
+				Side:      false,
+				OrderType: "limit",
+				Price:     "2000",
+				Quantity:  "1",
+			},
+			cancelMsg: types.MsgCancelOrder{
+				Creator: addr1,
+				Market:  "eth-usdc",
+				Side:    false,
+				Price:   "2000",
+			},
+			init: func() {
+				balances[addr1]["usdc"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("2000").BigInt())
+				balances[addr1]["eth"] = sdk.NewIntFromBigInt(sdk.MustNewDecFromStr("0").BigInt())
+			},
+			check: func(t *testing.T, k keeper.Keeper, msgServer types.MsgServer, goCtx context.Context, msg *types.MsgCreateOrder, res *types.MsgCreateOrderResponse) {
+				ctx := sdk.UnwrapSDKContext(goCtx)
+				side, _ := types.NewSide('b')
+				book, _ := k.GetVirtualBook(ctx, "eth-usdc", side)
+				addr1Eth := sdk.NewDecFromIntWithPrec(balances[addr1]["eth"], sdk.Precision).String()
+				addr1Usdc := sdk.NewDecFromIntWithPrec(balances[addr1]["usdc"], sdk.Precision).String()
+
+				require.Equal(t, 0, len(book.Levels))
+				require.Equal(t, sdk.ZeroDec().String(), addr1Eth)
+				require.Equal(t, sdk.MustNewDecFromStr("2000").String(), addr1Usdc)
+			},
+			bankKeeper: BankKeeper{
+				_getBalance: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+					var quantityDec sdk.Dec
+
+					switch denom {
+					case "usdc":
+						quantityDec = sdk.MustNewDecFromStr("2000")
+					case "eth":
+						quantityDec = sdk.MustNewDecFromStr("1")
+					default:
+						quantityDec = sdk.ZeroDec()
+					}
+
+					return sdk.NewCoin(denom, sdk.NewIntFromBigInt(quantityDec.BigInt()))
+				},
+				_sendCoins: func(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amts sdk.Coins) error {
+					for i := range amts {
+						coin := amts[i]
+						fromAddrBech32 := fromAddr.String()
+						toAddrBech32 := toAddr.String()
+						balances[fromAddrBech32][coin.Denom] = balances[fromAddrBech32][coin.Denom].Sub(coin.Amount)
+						balances[toAddrBech32][coin.Denom] = balances[toAddrBech32][coin.Denom].Add(coin.Amount)
+					}
+
+					return nil
+				},
+				_sendCoinsFromModuleToAccount: func(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amts sdk.Coins) error {
+					for i := range amts {
+						coin := amts[i]
+						balances[recipientAddr.String()][coin.Denom] = balances[recipientAddr.String()][coin.Denom].Add(coin.Amount)
+					}
+
+					return nil
+				},
+				_sendCoinsFromAccountToModule: func(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amts sdk.Coins) error {
+					for i := range amts {
+						coin := amts[i]
+						amtStr := coin.Amount.String()
+						balStr := balances[senderAddr.String()][coin.Denom].String()
+						_ = amtStr
+						_ = balStr
+						balances[senderAddr.String()][coin.Denom] = balances[senderAddr.String()][coin.Denom].Sub(coin.Amount)
+					}
+
+					return nil
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -263,6 +441,11 @@ func TestMsgCreateOrderMsg_LimitBuy(t *testing.T) {
 
 			if len(tt.msgs) == 0 {
 				res, err = msgServer.CreateOrder(ctx, &tt.msg)
+
+				if len(tt.cancelMsg.Creator) > 0 {
+					tt.cancelMsg.Id = res.Id
+					_, err = msgServer.CancelOrder(ctx, &tt.cancelMsg)
+				}
 			} else {
 				for _, msg := range tt.msgs {
 					res, err = msgServer.CreateOrder(ctx, &msg)

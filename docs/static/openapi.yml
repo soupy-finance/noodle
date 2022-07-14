@@ -48547,8 +48547,13 @@ definitions:
           chainContracts:
             type: string
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  soupyfinance.noodle.dex.MsgCancelOrderResponse:
+    type: object
   soupyfinance.noodle.dex.MsgCreateOrderResponse:
     type: object
+    properties:
+      id:
+        type: string
   soupyfinance.noodle.dex.Params:
     type: object
     properties:

@@ -8,6 +8,7 @@ option go_package = "github.com/soupy-finance/noodle/x/dex/types";
 // Msg defines the Msg service.
 service Msg {
       rpc CreateOrder(MsgCreateOrder) returns (MsgCreateOrderResponse);
+  rpc CancelOrder(MsgCancelOrder) returns (MsgCancelOrderResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -22,6 +23,18 @@ message MsgCreateOrder {
 }
 
 message MsgCreateOrderResponse {
+  string id = 1;
+}
+
+message MsgCancelOrder {
+  string creator = 1;
+  string market = 2;
+  bool side = 3;
+  string price = 4;
+  string id = 5;
+}
+
+message MsgCancelOrderResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

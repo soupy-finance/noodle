@@ -163,7 +163,9 @@ func (k Keeper) SavePureBook(ctx sdk.Context, book *types.OrderBook) error {
 
 func (k Keeper) SaveVirtualBook(ctx sdk.Context, book *types.OrderBook) error {
 	// Remove AMM orders
-	for i, level := range book.Levels {
+	for i := range book.Levels {
+		level := &book.Levels[i]
+
 		for j, order := range level.Orders {
 			if order.IsAmm {
 				level.Orders = append(level.Orders[:j], level.Orders[j+1:]...)
@@ -243,6 +245,7 @@ func (k Keeper) UpdateAccountOrder(ctx sdk.Context, order *types.Order, quantity
 	}
 
 	accountOrder.Filled = sdk.MustNewDecFromStr(accountOrder.Filled).Add(quantityChange).String()
+	accountOrders[order.Id] = accountOrder
 	accountOrdersBytes, err = json.Marshal(accountOrders)
 
 	if err != nil {
@@ -292,7 +295,9 @@ func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order, book *types.Ord
 
 	inserted := false
 
-	for i, level := range book.Levels {
+	for i := range book.Levels {
+		level := &book.Levels[i]
+
 		if level.Price.Equal(order.Price) {
 			level.Orders = append(level.Orders, *order)
 			inserted = true
@@ -333,6 +338,42 @@ func (k Keeper) InsertOrder(ctx sdk.Context, order *types.Order, book *types.Ord
 	}
 
 	k.InsertAccountOrder(ctx, order)
+	return nil
+}
+
+func (k Keeper) RemoveOrder(ctx sdk.Context, order *types.Order, book *types.OrderBook, save bool) error {
+	var err error
+
+	if book == nil {
+		book, err = k.GetPureBook(ctx, order.Market, order.Side)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	for i := range book.Levels {
+		level := &book.Levels[i]
+
+		if level.Price.Equal(order.Price) {
+			for j := range level.Orders {
+				if level.Orders[j].Id == order.Id {
+					level.Orders = append(level.Orders[:j], level.Orders[j+1:]...)
+					break
+				}
+			}
+		}
+	}
+
+	if save {
+		err = k.SaveVirtualBook(ctx, book)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	k.RemoveAccountOrder(ctx, order)
 	return nil
 }
 

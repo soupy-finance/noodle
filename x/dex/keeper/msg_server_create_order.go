@@ -111,7 +111,7 @@ func (k msgServer) CreateOrder(goCtx context.Context, msg *types.MsgCreateOrder)
 		return nil, err
 	}
 
-	return &types.MsgCreateOrderResponse{}, nil
+	return &types.MsgCreateOrderResponse{Id: string(orderId)}, nil
 }
 
 func (k Keeper) ProcessMarketOrder(
@@ -130,14 +130,14 @@ func (k Keeper) ProcessMarketOrder(
 	}
 
 	// Match orders
-	execSent, execRecv, sendAsset, recvAsset, remaining := k.MatchUntilEmpty(ctx, order, book)
+	_, _, _, _, remaining := k.MatchUntilEmpty(ctx, order, book)
 
 	if remaining.GT(zeroDec) {
 		return types.InsufficientLiquidity
 	}
 
-	EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
-	EmitBalanceChangeEvent(ctx, order.Account, recvAsset, execRecv)
+	// EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
+	// EmitBalanceChangeEvent(ctx, order.Account, recvAsset, execRecv)
 	return nil
 }
 
@@ -166,7 +166,7 @@ func (k Keeper) ProcessLimitOrder(
 	// Process post-only flag
 	//
 
-	execSent, execRecv, sendAsset, recvAsset, remaining := k.MatchUntilEmpty(ctx, order, fillBook)
+	_, _, sendAsset, _, remaining := k.MatchUntilEmpty(ctx, order, fillBook)
 
 	// Process other flags
 	//
@@ -190,8 +190,8 @@ func (k Keeper) ProcessLimitOrder(
 		EmitAddOfferEvent(ctx, order.Id, order.Account, order.Market, order.Quantity, order.Price, order.Side)
 	}
 
-	EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
-	EmitBalanceChangeEvent(ctx, order.Account, recvAsset, execRecv)
+	// EmitBalanceChangeEvent(ctx, order.Account, sendAsset, execSent.Neg())
+	// EmitBalanceChangeEvent(ctx, order.Account, recvAsset, execRecv)
 	return nil
 }
 
@@ -271,10 +271,9 @@ func (k Keeper) MatchNextBestAsk(
 	execSent sdk.Dec,
 	execRecv sdk.Dec,
 ) (sdk.Dec, sdk.Dec) {
-	level := book.Levels[0]
-	orders := level.Orders
+	level := &book.Levels[0]
 	// Panics if the level is empty
-	bestOffer := level.Orders[0]
+	bestOffer := &level.Orders[0]
 
 	localExecRecv := sdk.MinDec(order.Quantity, bestOffer.Quantity)
 	localExecSent := localExecRecv.Mul(bestOffer.Price)
@@ -293,20 +292,20 @@ func (k Keeper) MatchNextBestAsk(
 
 	// Remove price level if empty
 	if bestOffer.Quantity.LTE(zeroDec) {
-		level.Orders = orders[1:]
+		level.Orders = level.Orders[1:]
 
 		if len(level.Orders) == 0 {
 			book.RemoveTopLevel()
 		}
 
-		k.RemoveAccountOrder(ctx, &bestOffer)
+		k.RemoveAccountOrder(ctx, bestOffer)
 		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
 	} else {
-		k.UpdateAccountOrder(ctx, &bestOffer, localExecRecv)
+		k.UpdateAccountOrder(ctx, bestOffer, localExecRecv)
 		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
 	}
 
-	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecRecv, bestOffer.Price)
+	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecRecv, bestOffer.Price, 'b')
 	return execSent, execRecv
 }
 
@@ -319,10 +318,9 @@ func (k Keeper) MatchNextBestBid(
 	execSent sdk.Dec,
 	execRecv sdk.Dec,
 ) (sdk.Dec, sdk.Dec) {
-	level := book.Levels[0]
-	orders := level.Orders
+	level := &book.Levels[0]
 	// Panics if the level is empty
-	bestOffer := level.Orders[0]
+	bestOffer := &level.Orders[0]
 
 	localExecSent := sdk.MinDec(order.Quantity, bestOffer.Quantity)
 	localExecRecv := localExecSent.Mul(bestOffer.Price)
@@ -341,20 +339,20 @@ func (k Keeper) MatchNextBestBid(
 
 	// Remove price level if empty
 	if bestOffer.Quantity.LTE(zeroDec) {
-		level.Orders = orders[1:]
+		level.Orders = level.Orders[1:]
 
 		if len(level.Orders) == 0 {
 			book.RemoveTopLevel()
 		}
 
-		k.RemoveAccountOrder(ctx, &bestOffer)
+		k.RemoveAccountOrder(ctx, bestOffer)
 		EmitRemoveOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market)
 	} else {
-		k.UpdateAccountOrder(ctx, &bestOffer, localExecSent)
+		k.UpdateAccountOrder(ctx, bestOffer, localExecSent)
 		EmitUpdateOfferEvent(ctx, bestOffer.Id, bestOffer.Account, order.Market, bestOffer.Quantity)
 	}
 
-	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecSent, bestOffer.Price)
+	EmitTradeExecEvent(ctx, bestOffer.Account, order.Account, order.Market, localExecSent, bestOffer.Price, 'a')
 	return execSent, execRecv
 }
 
